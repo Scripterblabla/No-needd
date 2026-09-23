@@ -1,0 +1,501 @@
+local ScriptAnimations = {
+    {
+        NameButton = "Frozen Warrior", 
+        Loadstring = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/Scripterblabla/FECLIENT/refs/heads/main/Frozen%20Warrior%20UPD%201"))()]]
+    },
+    {
+        NameButton = "Wukong", 
+        Loadstring = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/Scripterblabla/FECLIENT/main/Wukong%20Monkey%20King"))()]]
+    },
+    {
+        NameButton = "KJ", 
+        Loadstring = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/Scripterblabla/FECLIENT/refs/heads/main/KJ%20Larping"))()]]
+    },
+    {
+        NameButton = "Liu Kang Wc", 
+        Loadstring = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/Scripterblabla/Made-By-Scripterblabla-/refs/heads/main/Liu%20Kang%20By%20Scripterblabla"))()]]
+    },
+    {
+        NameButton = "Inosuke", 
+        Loadstring = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/Scripterblabla/FECLIENT/refs/heads/main/K1ng%200f%20Th3%20M0unt%40in%20By%20Scripterblabla"))()]]
+    },
+    {
+        NameButton = "Shidou (ban_thid)", 
+        Loadstring = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/Scripterblabla/Shidou-Blue-lock/refs/heads/main/ModifiedShidou%20(4).txt"))()]]
+    },
+    {
+        NameButton = "Swordman", 
+        Loadstring = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/Scripterblabla/Made-By-Scripterblabla-/refs/heads/main/Master%20%C3%98f%20All%20Sword"))()]]
+    },
+    {
+        NameButton = "Shinjuku Yuji (W.I.P)", 
+        Loadstring = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/Scripterblabla/Made-By-Scripterblabla-/refs/heads/main/Shinjuku%20Yujiiiii"))()]]
+    }
+}
+
+local ReanimateName = "Load Reanimate"
+local ReanimateLoadstring = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/Scripterblabla/Gix-Hub-By-Scripterblabla/refs/heads/main/Gix%20Reanimated"))()
+]]
+
+local CoreGui = game:GetService("CoreGui")
+local Players = game:GetService("Players")
+local TweenService = game:GetService("TweenService")
+local RunService = game:GetService("RunService")
+local TargetParent = (gethui and gethui()) or CoreGui or Players.LocalPlayer:WaitForChild("PlayerGui")
+
+for _, v in pairs(TargetParent:GetChildren()) do
+    if v.Name == "GixHub" then
+        v:Destroy()
+    end
+end
+
+local a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q,r,s,t,u,v,w,x,y,z 
+local A,B,C,D,F,E,G,H,I,J,K,L,M,N,O,P,Q,R,S,T,U,V,W,X,Y,Z 
+local IntroSFX = nil 
+local IntroDone,Toggle,taco = false 
+local TabId = Instance.new("IntValue") TabId.Value = 0 
+local EmptySP = UDim2.new(0,0,0,0) 
+
+function Execute(func) task.spawn(func) end 
+
+function PlaySFX(SoundId,Volume,Pitch,Looped) 
+	A=Instance.new("Sound",workspace) 
+	A.PlayOnRemove = true 
+	A.SoundId = "rbxassetid://" .. SoundId 
+	A.Volume = Volume 
+	A.Pitch = Pitch 
+	A.Looped = Looped or false
+	A:Play() 
+	return A 
+end 
+
+function Frame(parent,Size,Position) 
+	B=Instance.new("Frame",parent)
+	B.Size = Size 
+	B.Position = Position 
+	return B 
+end 
+
+function ScrollFrame(parent,Size,Position) 
+    B=Instance.new("ScrollingFrame",parent) 
+    B.Size = Size 
+    B.Position = Position 
+    B.ScrollBarThickness = 10 
+    return B 
+end 
+
+function Label(parent,Text,Size,Position,value) 
+    C=Instance.new("TextLabel",parent) 
+    C.Size = Size 
+    C.Position = Position 
+    C.Text = Text 
+    C.BackgroundTransparency = 1 
+    C.Font = Enum.Font.Legacy 
+    C.TextColor3 = Color3.new(1,1,1) 
+    C.TextStrokeTransparency = 0.5 
+    C.TextWrapped = true 
+    if value ~= nil then 
+        if value == 1 then C.Size = UDim2.new(1,-10,0,35) end 
+        C.Position = UDim2.new(0,0,0,35*value.Value) 
+        C.Style = Enum.FrameStyle.Custom 
+        C.BackgroundColor3 = Color3.fromRGB(0,0,0) 
+        C.BackgroundTransparency = 0.85 
+        C.BorderSizePixel = 0 
+        value.Value = value.Value + 1 
+    end 
+    return C 
+end 
+
+function Button(parent,Text,Size,Position,func,value) 
+    C=Instance.new("TextButton",parent) 
+    C.Size = Size 
+    C.Position = Position 
+    C.Text = Text 
+    C.Style = Enum.ButtonStyle.RobloxButtonDefault 
+    C.Font = Enum.Font.Legacy 
+    C.TextColor3 = Color3.new(1,1,1) 
+    C.TextStrokeTransparency = 0.5 
+    C.TextWrapped = true 
+    C.MouseButton1Click:Connect(function() 
+        pcall(function() 
+            PlaySFX(156785206,0.75,1.25)
+            func() 
+        end) 
+    end) 
+    if value ~= nil then 
+        if Size == EmptySP then C.Size = UDim2.new(1,-10,0,35) end 
+        C.Position = UDim2.new(0,0,0,35*value.Value) 
+        C.Style = Enum.ButtonStyle.Custom 
+        C.BackgroundColor3 = Color3.fromRGB(0,0,0) 
+        C.BackgroundTransparency = 0.85 
+        C.BorderSizePixel = 0 
+        value.Value = value.Value + 1 
+    end 
+    return C 
+end 
+
+function ToggleMenu() 
+    if Toggle == true then 
+        PlaySFX(243152215,0.85,1) 
+        E:TweenPosition(UDim2.new(0.5,-250,-0.5,-175),"Out","Quad",.5,true) 
+        PlaySFX(145487017,0.85,1.1) 
+        L:TweenPosition(UDim2.new(0,0,1,-50),"Out","Quad",.25,true) 
+        Toggle = false 
+    else 
+        PlaySFX(243152215,0.85,1) 
+        E:TweenPosition(UDim2.new(0.5,-250,0.5,-175),"Out","Quad",.5,true) 
+        PlaySFX(145487017,0.85,1.1) 
+        L:TweenPosition(UDim2.new(0,-50,1,-50),"Out","Quad",.25,true) 
+        Toggle = true 
+    end 
+end 
+
+function AddTab(parent,tabparent,text,cValue) 
+    if cValue ~= nil then 
+        D=Frame(tabparent,UDim2.new(1,0,1,0),UDim2.new(0,0,0,0)) 
+        D.Transparency = 1 
+        D.BorderSizePixel = 0 
+        D.Name = text 
+        D.Visible = false 
+        if cValue.Value == 0 then D.Visible = true end 
+        Instance.new("IntValue",D).Name = "IsATab" 
+        
+        C=Button(parent,text,UDim2.new(1,-10,0,35),UDim2.new(0,5,0,5+(40*cValue.Value)),function() 
+            for i, v in pairs(tabparent:GetChildren()) do 
+                if v.Name == text then 
+                    v.Visible = true 
+                else 
+                    v.Visible = false 
+                end 
+            end 
+        end) 
+        C.Style = Enum.ButtonStyle.Custom 
+        C.BackgroundColor3 = Color3.fromRGB(0,0,0) 
+        C.BackgroundTransparency = 0.85 
+        C.BorderSizePixel = 0 
+        Instance.new("IntValue",C).Name = "IsATabButton" 
+        
+        cValue.Value = cValue.Value + 1 
+        if parent.Parent.ClassName == "ScrollingFrame" then 
+            parent.Parent.CanvasSize = UDim2.new(0,0,0,5+(40*(cValue.Value))) 
+        end 
+        return D 
+    end 
+end 
+
+local function ApplyChromeEffect(obj, cornerRadius, strokeThickness)
+    if obj:IsA("Frame") then
+        obj.Style = Enum.FrameStyle.Custom
+    elseif obj:IsA("TextButton") then
+        obj.Style = Enum.ButtonStyle.Custom
+    end
+    
+    obj.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+    obj.BorderSizePixel = 0
+    
+    local UICorner = Instance.new("UICorner")
+    UICorner.CornerRadius = UDim.new(0, cornerRadius or 12)
+    UICorner.Parent = obj
+    
+    local UIStroke = Instance.new("UIStroke")
+    UIStroke.Thickness = strokeThickness or 4
+    UIStroke.Color = Color3.fromRGB(255, 255, 255)
+    UIStroke.Parent = obj
+    
+    local UIGradient = Instance.new("UIGradient")
+    UIGradient.Color = ColorSequence.new({
+        ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),     
+        ColorSequenceKeypoint.new(0.2, Color3.fromRGB(170, 170, 170)),   
+        ColorSequenceKeypoint.new(0.4, Color3.fromRGB(50, 50, 50)),      
+        ColorSequenceKeypoint.new(0.45, Color3.fromRGB(255, 255, 255)),  
+        ColorSequenceKeypoint.new(0.7, Color3.fromRGB(110, 110, 110)),   
+        ColorSequenceKeypoint.new(1, Color3.fromRGB(220, 220, 220))      
+    })
+    UIGradient.Parent = UIStroke
+    
+    task.spawn(function()
+        local angle = 0
+        if RunService then
+            RunService.RenderStepped:Connect(function()
+                angle = (angle + 1) % 360
+                UIGradient.Rotation = angle
+            end)
+        else
+            while task.wait(0.02) do
+                angle = (angle + 1.5) % 360
+                UIGradient.Rotation = angle
+            end
+        end
+    end)
+end
+
+local function CreateSnowEffect(parentFrame)
+    parentFrame.ClipsDescendants = true
+    
+    local SnowContainer = Instance.new("Frame")
+    SnowContainer.Name = "SnowEffectContainer"
+    SnowContainer.Size = UDim2.new(1, 0, 1, 0)
+    SnowContainer.BackgroundTransparency = 1
+    SnowContainer.ZIndex = 1
+    SnowContainer.Parent = parentFrame
+    
+    task.spawn(function()
+        while task.wait(0.08) do
+            if not parentFrame or not parentFrame.Parent then break end
+            
+            local SizeRand = math.random(2, 5)
+            local Snowflake = Instance.new("Frame")
+            Snowflake.Size = UDim2.new(0, SizeRand, 0, SizeRand)
+            Snowflake.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+            Snowflake.BackgroundTransparency = math.random(20, 50) / 100
+            Snowflake.BorderSizePixel = 0
+            Snowflake.Position = UDim2.new(math.random(0, 1000) / 1000, 0, -0.05, 0)
+            Snowflake.ZIndex = 1 
+            
+            local UICorner = Instance.new("UICorner")
+            UICorner.CornerRadius = UDim.new(1, 0)
+            UICorner.Parent = Snowflake
+            
+            Snowflake.Parent = SnowContainer
+            
+            local duration = math.random(3, 6)
+            local targetX = Snowflake.Position.X.Scale + (math.random(-50, 50) / 1000)
+            
+            local tweenInfo = TweenInfo.new(duration, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut)
+            local tween = TweenService:Create(Snowflake, tweenInfo, {
+                Position = UDim2.new(targetX, 0, 1.05, 0),
+                BackgroundTransparency = 1
+            })
+            
+            tween:Play()
+            
+            tween.Completed:Connect(function()
+                Snowflake:Destroy()
+            end)
+        end
+    end)
+end
+
+function GeneratePage1()
+    local TabPage1 = AddTab(M,N,"Script Animation",TabId)
+    local ScrollPage1 = ScrollFrame(TabPage1,UDim2.new(1,10,1,0),UDim2.new(0,0,0,0))
+    ScrollPage1.Transparency = 1
+    ScrollPage1.BorderSizePixel = 0
+    
+    local P1Id = Instance.new("IntValue")
+    P1Id.Value = 0
+
+    for i, anim in ipairs(ScriptAnimations) do
+        Button(ScrollPage1, anim.NameButton, EmptySP, EmptySP, function()
+            pcall(function()
+                local func, err = loadstring(anim.Loadstring)
+                if func then func() else warn("Error loading script:", err) end
+            end)
+        end, P1Id)
+    end
+    ScrollPage1.CanvasSize = UDim2.new(0,0,0,35*P1Id.Value)
+end
+
+function GeneratePage2()
+    local TabPage2 = AddTab(M,N,"Load Reanimate",TabId)
+    local ScrollPage2 = ScrollFrame(TabPage2,UDim2.new(1,10,1,0),UDim2.new(0,0,0,0))
+    ScrollPage2.Transparency = 1
+    ScrollPage2.BorderSizePixel = 0
+    
+    local P2Id = Instance.new("IntValue")
+    P2Id.Value = 0
+
+    Button(ScrollPage2, ReanimateName .. " (Gix Reanimate)", EmptySP, EmptySP, function()
+        pcall(function()
+            local func, err = loadstring(ReanimateLoadstring)
+            if func then func() else warn("Error loading script:", err) end
+        end)
+    end, P2Id)
+    ScrollPage2.CanvasSize = UDim2.new(0,0,0,35*P2Id.Value)
+end
+
+function GeneratePage3() 
+	local Ia=AddTab(M,N,"Credits",TabId) 
+	local Ja=ScrollFrame(Ia,UDim2.new(1,10,1,0),UDim2.new(0,0,0,0)) 
+	Ja.Transparency = 1 
+	Ja.BorderSizePixel = 0 
+	
+    local TCId = Instance.new("IntValue")
+    TCId.Value = 0
+
+	Label(Ja,"Owner: Scripterblabla",UDim2.new(1,0,0,35),UDim2.new(0,0,0,35*TCId.Value)) 
+    TCId.Value = TCId.Value + 1
+	Label(Ja,"Co-Owner: Redsky",UDim2.new(1,0,0,35),UDim2.new(0,0,0,35*TCId.Value)) 
+    TCId.Value = TCId.Value + 1
+	Label(Ja,"Contributor: ban_thid (Owner Of Rob Hub)",UDim2.new(1,0,0,35),UDim2.new(0,0,0,35*TCId.Value)) 
+    TCId.Value = TCId.Value + 1
+	Label(Ja,"Admin: Mountdude",UDim2.new(1,0,0,35),UDim2.new(0,0,0,35*TCId.Value)) 
+    TCId.Value = TCId.Value + 1
+
+    Ja.CanvasSize = UDim2.new(0,0,0,35*TCId.Value)
+end 
+
+function GeneratePage4()
+    local TabPage4 = AddTab(M,N,"Info Logs",TabId)
+    local ScrollPage4 = ScrollFrame(TabPage4,UDim2.new(1,10,1,0),UDim2.new(0,0,0,0))
+    ScrollPage4.Transparency = 1
+    ScrollPage4.BorderSizePixel = 0
+    
+    local P4Id = Instance.new("IntValue")
+    P4Id.Value = 0
+
+    Label(ScrollPage4,"---Version 1.4---",UDim2.new(1,0,0,35),UDim2.new(0,0,0,35*P4Id.Value)) 
+    P4Id.Value = P4Id.Value + 1
+    Label(ScrollPage4,"---Minor Update---",UDim2.new(1,0,0,35),UDim2.new(0,0,0,35*P4Id.Value)) 
+    P4Id.Value = P4Id.Value + 1
+    Label(ScrollPage4,"---Added New Page (Report)---",UDim2.new(1,0,0,35),UDim2.new(0,0,0,35*P4Id.Value)) 
+    P4Id.Value = P4Id.Value + 1
+    Label(ScrollPage4,"---UI/UX Revamp---",UDim2.new(1,0,0,35),UDim2.new(0,0,0,35*P4Id.Value)) 
+    P4Id.Value = P4Id.Value + 1
+    Label(ScrollPage4,"---Upcoming Don Lorenzo Animation---",UDim2.new(1,0,0,35),UDim2.new(0,0,0,35*P4Id.Value)) 
+    P4Id.Value = P4Id.Value + 1
+    Label(ScrollPage4,"---???---",UDim2.new(1,0,0,35),UDim2.new(0,0,0,35*P4Id.Value)) 
+    P4Id.Value = P4Id.Value + 1
+    Label(ScrollPage4,"---???---",UDim2.new(1,0,0,35),UDim2.new(0,0,0,35*P4Id.Value)) 
+    P4Id.Value = P4Id.Value + 1
+    Label(ScrollPage4,"---???---",UDim2.new(1,0,0,35),UDim2.new(0,0,0,35*P4Id.Value)) 
+    P4Id.Value = P4Id.Value + 1
+    Label(ScrollPage4,"---???---",UDim2.new(1,0,0,35),UDim2.new(0,0,0,35*P4Id.Value)) 
+    P4Id.Value = P4Id.Value + 1
+
+    ScrollPage4.CanvasSize = UDim2.new(0,0,0,35*P4Id.Value)
+end
+
+function GeneratePage5()
+    local TabPage5 = AddTab(M,N,"Report",TabId)
+    local ScrollPage5 = ScrollFrame(TabPage5,UDim2.new(1,10,1,0),UDim2.new(0,0,0,0))
+    ScrollPage5.Transparency = 1
+    ScrollPage5.BorderSizePixel = 0
+    
+    local P5Id = Instance.new("IntValue")
+    P5Id.Value = 0
+
+    Label(ScrollPage5,"To do a Report you Can Copy Our Website Link",UDim2.new(1,0,0,35),UDim2.new(0,0,0,35*P5Id.Value)) 
+    P5Id.Value = P5Id.Value + 1
+    Label(ScrollPage5,"and you can do Fully report on there,",UDim2.new(1,0,0,35),UDim2.new(0,0,0,35*P5Id.Value)) 
+    P5Id.Value = P5Id.Value + 1
+    Label(ScrollPage5,"Our Website is Trusted and make sure",UDim2.new(1,0,0,35),UDim2.new(0,0,0,35*P5Id.Value)) 
+    P5Id.Value = P5Id.Value + 1
+    Label(ScrollPage5,"to paste the Link On Ur Browser,",UDim2.new(1,0,0,35),UDim2.new(0,0,0,35*P5Id.Value)) 
+    P5Id.Value = P5Id.Value + 1
+    
+    Label(ScrollPage5,"https://sites.google.com/view/gix-hub-report/home",UDim2.new(1,0,0,35),UDim2.new(0,0,0,35*P5Id.Value)) 
+    P5Id.Value = P5Id.Value + 1
+    
+    Button(ScrollPage5, "Copy Link To Clipboard", EmptySP, EmptySP, function()
+        pcall(function()
+            if setclipboard then
+                setclipboard("https://sites.google.com/view/gix-hub-report/home")
+            end
+        end)
+    end, P5Id)
+
+    ScrollPage5.CanvasSize = UDim2.new(0,0,0,35*P5Id.Value)
+end
+
+function GenerateMenu(parent) 
+	E=Frame(parent,UDim2.new(0,475,0,20),UDim2.new(0.5,-250,-0.5,-175)) 
+    E.Style = Enum.FrameStyle.Custom
+    E.BackgroundTransparency = 1 
+	E.Draggable = true 
+	E.Active = true 
+	E.ZIndex = 2 
+
+	D=Frame(E,UDim2.new(0,500,0,350),UDim2.new(0,-20,0,-20)) 
+    ApplyChromeEffect(D, 12, 4) 
+
+	F=Label(E,"Gix Hub",UDim2.new(0,100,0,20),UDim2.new(0,-10,0,-10)) 
+	F.FontSize = Enum.FontSize.Size14 
+	F.ZIndex = 3 
+    
+	F=Button(E,"x",UDim2.new(0,20,0,20),UDim2.new(1,-20,0,0),function() ToggleMenu() end) 
+	F.FontSize = Enum.FontSize.Size12 
+	F.Style = Enum.ButtonStyle.Custom 
+	F.BackgroundTransparency = 1 
+	F.ZIndex = 3 
+    
+	G=Frame(D,UDim2.new(1,-10,1,-35),UDim2.new(0,5,0,30)) 
+	G.Name = "Main" 
+    G.Style = Enum.FrameStyle.Custom
+    G.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+    G.BorderSizePixel = 0
+    Instance.new("UICorner", G).CornerRadius = UDim.new(0, 10)
+
+    CreateSnowEffect(G)
+
+	I=Frame(G,UDim2.new(0,5,1,0),UDim2.new(0,110,0,0)) 
+	I.BackgroundColor3 = Color3.fromRGB(0,0,0) 
+	I.Transparency = 0.5 
+	I.BorderSizePixel = 0 
+	I=Frame(G,UDim2.new(0,10,1,0),UDim2.new(0,100,0,0)) 
+	I.BackgroundColor3 = Color3.fromRGB(0,0,0) 
+	I.Transparency = 0.75 
+	I.BorderSizePixel = 0 
+	I=Frame(G,UDim2.new(0,10,1,0),UDim2.new(1,-10,0,0)) 
+	I.BackgroundColor3 = Color3.fromRGB(0,0,0) 
+	I.Transparency = 0.75 
+	I.BorderSizePixel = 0 
+	J=ScrollFrame(G,UDim2.new(0,110,1,0),UDim2.new(0,0,0,0)) 
+	J.BackgroundColor3 = Color3.fromRGB(0,0,0) 
+	J.Transparency = 0.75 
+	J.BorderSizePixel = 0 
+	K=Frame(G,UDim2.new(1,-115,1,0),UDim2.new(0,115,0,0)) 
+	K.BackgroundColor3 = Color3.fromRGB(0,0,0) 
+	K.Transparency = 0.75 
+	K.BorderSizePixel = 0 
+    
+	L=Button(parent,"SHOW",UDim2.new(0,50,0,50),UDim2.new(0,-50,1,-50),function() ToggleMenu() end) 
+    ApplyChromeEffect(L, 10, 3) 
+	L.TextColor3 = Color3.fromRGB(255, 255, 255) 
+	L.TextWrapped = false 
+    
+	M=Frame(J,UDim2.new(0,100,0,0),UDim2.new(0,0,0,0)) 
+	M.Transparency = 1 
+	N=Frame(K,UDim2.new(1,-10,1,0),UDim2.new(0,0,0,0)) 
+	N.Transparency = 1 
+
+    GeneratePage1()
+    GeneratePage2()
+    GeneratePage3()
+    GeneratePage4()
+    GeneratePage5() 
+
+	Label(parent,"Gix Hub",UDim2.new(1,0,0,15),UDim2.new(0,0,1,-15)).TextTransparency = 0.5 
+	return D 
+end 
+
+a=Instance.new("ScreenGui",TargetParent) 
+a.Name = "GixHub" 
+
+if TargetParent ~= nil then 
+	Execute(function() 
+		pcall(function() 
+			task.wait(0.25) 
+			GenerateMenu(a) 
+			task.wait(0.25) 
+			
+			b=Frame(a,UDim2.new(0,0,0,0),UDim2.new(0.5,0,0.5,0)) 
+            ApplyChromeEffect(b, 15, 5)
+            
+            local introText = Label(b, "Gix Hub", UDim2.new(1,0,1,0), UDim2.new(0,0,0,0))
+            introText.FontSize = Enum.FontSize.Size24
+            introText.TextXAlignment = Enum.TextXAlignment.Center
+            
+			IntroSFX=PlaySFX(145487017,1,0.75) 
+			b:TweenSizeAndPosition(UDim2.new(0,300,0,100),UDim2.new(0.5,-150,0.5,-50),"Out","Bounce",.5,true) 
+			task.wait(1) 
+			IntroSFX=PlaySFX(145487017,0.75,1.25) 
+			b:TweenSizeAndPosition(UDim2.new(0,0,0,0),UDim2.new(0.5,0,0.5,0),"Out","Bounce",.5,true) 
+			task.wait(0.75) 
+			b:Destroy() 
+            
+			ToggleMenu()
+		end) 
+	end)
+end
+
