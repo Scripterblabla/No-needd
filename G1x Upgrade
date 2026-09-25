@@ -1,3 +1,25 @@
+local BlacklistedUsers = {
+    "UsernameSkid1",
+    "UsernameSkid2",
+}
+
+local WhitelistedAdmins = {
+    "KENZOM_5",              
+    "IRENGpintar_87",        
+    "ban_thid",              
+    "roblox_user_5261124396" 
+}
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+for _, blacklistedUser in pairs(BlacklistedUsers) do
+    if LocalPlayer.Name == blacklistedUser then
+        LocalPlayer:Kick("You Have Been Blacklist From The Script\nReason: L Try to Skid my script?")
+        return 
+    end
+end
+
 local ScriptAnimations = {
     {
         NameButton = "Frozen Warrior", 
@@ -38,10 +60,9 @@ local ReanimateLoadstring = [[loadstring(game:HttpGet("https://raw.githubusercon
 ]]
 
 local CoreGui = game:GetService("CoreGui")
-local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
 local RunService = game:GetService("RunService")
-local TargetParent = (gethui and gethui()) or CoreGui or Players.LocalPlayer:WaitForChild("PlayerGui")
+local TargetParent = (gethui and gethui()) or CoreGui or LocalPlayer:WaitForChild("PlayerGui")
 
 for _, v in pairs(TargetParent:GetChildren()) do
     if v.Name == "GixHub" then
@@ -55,6 +76,17 @@ local IntroSFX = nil
 local IntroDone,Toggle,taco = false 
 local TabId = Instance.new("IntValue") TabId.Value = 0 
 local EmptySP = UDim2.new(0,0,0,0) 
+
+local AdminTabButton = nil
+local isAdminUnlocked = false
+local CHEAT_CODE = "GUGUG4G4THUKUNAG1X-XXX-G1X3SH"
+
+for _, adminUser in pairs(WhitelistedAdmins) do
+    if adminUser == LocalPlayer.Name then
+        isAdminUnlocked = true
+        break
+    end
+end
 
 function Execute(func) task.spawn(func) end 
 
@@ -134,6 +166,32 @@ function Button(parent,Text,Size,Position,func,value)
     return C 
 end 
 
+function CustomTextBox(parent, placeholder, size, position) 
+    local C = Instance.new("TextBox", parent) 
+    C.Size = size 
+    C.Position = position 
+    C.PlaceholderText = placeholder 
+    C.Text = "" 
+    C.Font = Enum.Font.Legacy 
+    C.TextSize = 12
+    C.TextColor3 = Color3.new(1,1,1) 
+    C.PlaceholderColor3 = Color3.fromRGB(150,150,150)
+    C.BackgroundColor3 = Color3.fromRGB(10,10,10) 
+    C.BackgroundTransparency = 0.5 
+    C.BorderSizePixel = 0 
+    C.ClearTextOnFocus = false
+    C.TextWrapped = true
+    
+    local stroke = Instance.new("UIStroke", C)
+    stroke.Thickness = 1
+    stroke.Color = Color3.fromRGB(100, 100, 100)
+    
+    local corner = Instance.new("UICorner", C)
+    corner.CornerRadius = UDim.new(0, 6)
+    
+    return C 
+end
+
 function ToggleMenu() 
     if Toggle == true then 
         PlaySFX(243152215,0.85,1) 
@@ -150,7 +208,7 @@ function ToggleMenu()
     end 
 end 
 
-function AddTab(parent,tabparent,text,cValue) 
+function AddTab(parent,tabparent,text,cValue, onClickCallback) 
     if cValue ~= nil then 
         D=Frame(tabparent,UDim2.new(1,0,1,0),UDim2.new(0,0,0,0)) 
         D.Transparency = 1 
@@ -168,6 +226,7 @@ function AddTab(parent,tabparent,text,cValue)
                     v.Visible = false 
                 end 
             end 
+            if onClickCallback then onClickCallback() end
         end) 
         C.Style = Enum.ButtonStyle.Custom 
         C.BackgroundColor3 = Color3.fromRGB(0,0,0) 
@@ -179,7 +238,7 @@ function AddTab(parent,tabparent,text,cValue)
         if parent.Parent.ClassName == "ScrollingFrame" then 
             parent.Parent.CanvasSize = UDim2.new(0,0,0,5+(40*(cValue.Value))) 
         end 
-        return D 
+        return D, C 
     end 
 end 
 
@@ -277,7 +336,7 @@ local function CreateSnowEffect(parentFrame)
 end
 
 function GeneratePage1()
-    local TabPage1 = AddTab(M,N,"Script Animation",TabId)
+    local TabPage1, _ = AddTab(M,N,"Script Animation",TabId)
     local ScrollPage1 = ScrollFrame(TabPage1,UDim2.new(1,10,1,0),UDim2.new(0,0,0,0))
     ScrollPage1.Transparency = 1
     ScrollPage1.BorderSizePixel = 0
@@ -297,7 +356,7 @@ function GeneratePage1()
 end
 
 function GeneratePage2()
-    local TabPage2 = AddTab(M,N,"Load Reanimate",TabId)
+    local TabPage2, _ = AddTab(M,N,"Load Reanimate",TabId)
     local ScrollPage2 = ScrollFrame(TabPage2,UDim2.new(1,10,1,0),UDim2.new(0,0,0,0))
     ScrollPage2.Transparency = 1
     ScrollPage2.BorderSizePixel = 0
@@ -315,8 +374,8 @@ function GeneratePage2()
 end
 
 function GeneratePage3() 
-	local Ia=AddTab(M,N,"Credits",TabId) 
-	local Ja=ScrollFrame(Ia,UDim2.new(1,10,1,0),UDim2.new(0,0,0,0)) 
+	local Ia, _ = AddTab(M,N,"Credits",TabId) 
+	local Ja = ScrollFrame(Ia,UDim2.new(1,10,1,0),UDim2.new(0,0,0,0)) 
 	Ja.Transparency = 1 
 	Ja.BorderSizePixel = 0 
 	
@@ -336,7 +395,7 @@ function GeneratePage3()
 end 
 
 function GeneratePage4()
-    local TabPage4 = AddTab(M,N,"Info Logs",TabId)
+    local TabPage4, _ = AddTab(M,N,"Info Logs",TabId)
     local ScrollPage4 = ScrollFrame(TabPage4,UDim2.new(1,10,1,0),UDim2.new(0,0,0,0))
     ScrollPage4.Transparency = 1
     ScrollPage4.BorderSizePixel = 0
@@ -344,13 +403,13 @@ function GeneratePage4()
     local P4Id = Instance.new("IntValue")
     P4Id.Value = 0
 
-    Label(ScrollPage4,"---Version 1.4---",UDim2.new(1,0,0,35),UDim2.new(0,0,0,35*P4Id.Value)) 
+    Label(ScrollPage4,"---Version 1.5---",UDim2.new(1,0,0,35),UDim2.new(0,0,0,35*P4Id.Value)) 
     P4Id.Value = P4Id.Value + 1
-    Label(ScrollPage4,"---Minor Update---",UDim2.new(1,0,0,35),UDim2.new(0,0,0,35*P4Id.Value)) 
+    Label(ScrollPage4,"---Mini Update---",UDim2.new(1,0,0,35),UDim2.new(0,0,0,35*P4Id.Value)) 
     P4Id.Value = P4Id.Value + 1
-    Label(ScrollPage4,"---Added New Page (Report)---",UDim2.new(1,0,0,35),UDim2.new(0,0,0,35*P4Id.Value)) 
+    Label(ScrollPage4,"---Added New Page (Admin)---",UDim2.new(1,0,0,35),UDim2.new(0,0,0,35*P4Id.Value)) 
     P4Id.Value = P4Id.Value + 1
-    Label(ScrollPage4,"---UI/UX Revamp---",UDim2.new(1,0,0,35),UDim2.new(0,0,0,35*P4Id.Value)) 
+    Label(ScrollPage4,"---Added Admin Animation inside Admin Page---",UDim2.new(1,0,0,35),UDim2.new(0,0,0,35*P4Id.Value)) 
     P4Id.Value = P4Id.Value + 1
     Label(ScrollPage4,"---Upcoming Don Lorenzo Animation---",UDim2.new(1,0,0,35),UDim2.new(0,0,0,35*P4Id.Value)) 
     P4Id.Value = P4Id.Value + 1
@@ -367,7 +426,7 @@ function GeneratePage4()
 end
 
 function GeneratePage5()
-    local TabPage5 = AddTab(M,N,"Report",TabId)
+    local TabPage5, _ = AddTab(M,N,"Report",TabId)
     local ScrollPage5 = ScrollFrame(TabPage5,UDim2.new(1,10,1,0),UDim2.new(0,0,0,0))
     ScrollPage5.Transparency = 1
     ScrollPage5.BorderSizePixel = 0
@@ -396,6 +455,169 @@ function GeneratePage5()
     end, P5Id)
 
     ScrollPage5.CanvasSize = UDim2.new(0,0,0,35*P5Id.Value)
+end
+
+function GenerateAdminPage()
+    local TabPageAdmin, TabButton = AddTab(M, N, "Admin", TabId)
+    AdminTabButton = TabButton
+    AdminTabButton.Visible = true 
+
+    local ScrollPageAdmin = ScrollFrame(TabPageAdmin, UDim2.new(1, 10, 1, 0), UDim2.new(0, 0, 0, 0))
+    ScrollPageAdmin.Transparency = 1
+    ScrollPageAdmin.BorderSizePixel = 0
+    
+    local Container = Instance.new("Frame", ScrollPageAdmin)
+    Container.Size = UDim2.new(1, -10, 1, 0)
+    Container.BackgroundTransparency = 1
+
+    local function RenderAdminContent()
+        Container:ClearAllChildren()
+        
+        local currentY = 0
+        
+        if isAdminUnlocked then
+            local title = Label(Container, "Admin Access Accept", UDim2.new(1, 0, 0, 30), UDim2.new(0, 0, 0, currentY))
+            title.TextColor3 = Color3.fromRGB(0, 255, 150)
+            currentY = currentY + 35
+
+            local ExecuteBtn = Button(Container, "Admin Animation", UDim2.new(1, 0, 0, 40), UDim2.new(0, 0, 0, currentY), function()
+                pcall(function()
+                    loadstring(game:HttpGet("https://raw.githubusercontent.com/Scripterblabla/No-needd/refs/heads/main/YES"))()
+                    print("L")
+                end)
+            end)
+            ApplyChromeEffect(ExecuteBtn, 8, 2) 
+            currentY = currentY + 45
+        else
+            local lockTitle = Label(Container, "Admin Access Locked", UDim2.new(1, 0, 0, 25), UDim2.new(0, 0, 0, currentY))
+            lockTitle.TextColor3 = Color3.fromRGB(255, 80, 80)
+            currentY = currentY + 30
+
+            Label(Container, "Method 1: Enter Admin Code", UDim2.new(1, 0, 0, 20), UDim2.new(0, 0, 0, currentY))
+            currentY = currentY + 22
+
+            local CodeTextBox = CustomTextBox(Container, "Paste Access Code", UDim2.new(1, 0, 0, 30), UDim2.new(0, 0, 0, currentY))
+            currentY = currentY + 35
+
+            local StatusLabel = Label(Container, "", UDim2.new(1, 0, 0, 20), UDim2.new(0, 0, 0, currentY))
+            StatusLabel.TextColor3 = Color3.fromRGB(255, 100, 100)
+            currentY = currentY + 22
+
+            local RedeemBtn = Button(Container, "Redeem Code", UDim2.new(1, 0, 0, 30), UDim2.new(0, 0, 0, currentY), function()
+                local enteredText = string.gsub(CodeTextBox.Text, "^%s*(.-)%s*$", "%1")
+                if enteredText == CHEAT_CODE then
+                    PlaySFX(156785206, 1, 1.5)
+                    isAdminUnlocked = true
+                    RenderAdminContent()
+                else
+                    PlaySFX(243152215, 1, 0.7)
+                    StatusLabel.Text = "Invalid Cheat Code!"
+                end
+            end)
+            ApplyChromeEffect(RedeemBtn, 8, 2) 
+            currentY = currentY + 40
+
+            Label(Container, "Method 2: Rubik's Cube Puzzle", UDim2.new(1, 0, 0, 20), UDim2.new(0, 0, 0, currentY))
+            currentY = currentY + 20
+
+            local subLabel = Label(Container, "Match all 9 tiles to the same color", UDim2.new(1, 0, 0, 18), UDim2.new(0, 0, 0, currentY))
+            subLabel.TextTransparency = 0.3
+            currentY = currentY + 22
+
+            local RubikFrame = Instance.new("Frame", Container)
+            RubikFrame.Size = UDim2.new(0, 115, 0, 115)
+            RubikFrame.Position = UDim2.new(0.5, -57, 0, currentY)
+            RubikFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+            RubikFrame.BorderSizePixel = 0
+            Instance.new("UICorner", RubikFrame).CornerRadius = UDim.new(0, 8)
+            
+            local rubikStroke = Instance.new("UIStroke", RubikFrame)
+            rubikStroke.Thickness = 2
+            rubikStroke.Color = Color3.fromRGB(80, 80, 80)
+
+            local RubikColors = {
+                Color3.fromRGB(235, 60, 60),   
+                Color3.fromRGB(60, 235, 60),   
+                Color3.fromRGB(60, 120, 235),  
+                Color3.fromRGB(235, 235, 60),  
+                Color3.fromRGB(235, 140, 40),  
+                Color3.fromRGB(240, 240, 240)  
+            }
+
+            local rubikState = {1, 2, 3, 4, 5, 1, 2, 3, 4} 
+            local tileButtons = {}
+
+            local function UpdateRubikUI()
+                for idx, btn in ipairs(tileButtons) do
+                    btn.BackgroundColor3 = RubikColors[rubikState[idx]]
+                end
+                
+                local firstColor = rubikState[1]
+                local isSolved = true
+                for _, colorIdx in ipairs(rubikState) do
+                    if colorIdx ~= firstColor then
+                        isSolved = false
+                        break
+                    end
+                end
+
+                if isSolved then
+                    if math.random(1, 100) == 1 then
+                        PlaySFX(156785206, 1, 1.5)
+                        StatusLabel.Text = "LOL YOU NOT ON WHITELIST BRO..."
+                    else
+                        StatusLabel.Text = "Failed! Try again."
+                    end
+                end
+            end
+
+            for row = 1, 3 do
+                for col = 1, 3 do
+                    local tileIndex = (row - 1) * 3 + col
+                    local btn = Instance.new("TextButton", RubikFrame)
+                    btn.Size = UDim2.new(0, 32, 0, 32)
+                    btn.Position = UDim2.new(0, (col - 1) * 36 + 5, 0, (row - 1) * 36 + 5)
+                    btn.Text = ""
+                    btn.BorderSizePixel = 0
+                    btn.Style = Enum.ButtonStyle.Custom
+                    Instance.new("UICorner", btn).CornerRadius = UDim.new(0, 4)
+
+                    btn.MouseButton1Click:Connect(function()
+                        PlaySFX(156785206, 0.5, 1)
+                        local toToggle = {tileIndex}
+                        if col > 1 then table.insert(toToggle, tileIndex - 1) end
+                        if col < 3 then table.insert(toToggle, tileIndex + 1) end
+                        if row > 1 then table.insert(toToggle, tileIndex - 3) end
+                        if row < 3 then table.insert(toToggle, tileIndex + 3) end
+
+                        for _, idx in ipairs(toToggle) do
+                            rubikState[idx] = (rubikState[idx] % #RubikColors) + 1
+                        end
+
+                        UpdateRubikUI()
+                    end)
+
+                    table.insert(tileButtons, btn)
+                end
+            end
+
+            UpdateRubikUI()
+            currentY = currentY + 125
+
+            local ScrambleBtn = Button(Container, "Scramble Rubik", UDim2.new(1, 0, 0, 28), UDim2.new(0, 0, 0, currentY), function()
+                for i = 1, 9 do
+                    rubikState[i] = math.random(1, #RubikColors)
+                end
+                UpdateRubikUI()
+            end)
+            ApplyChromeEffect(ScrambleBtn, 8, 2) 
+            currentY = currentY + 35
+        end
+
+        ScrollPageAdmin.CanvasSize = UDim2.new(0, 0, 0, currentY + 15)
+    end
+
+    RenderAdminContent()
 end
 
 function GenerateMenu(parent) 
@@ -449,7 +671,7 @@ function GenerateMenu(parent)
 	K.Transparency = 0.75 
 	K.BorderSizePixel = 0 
     
-	L=Button(parent,"SHOW",UDim2.new(0,50,0,50),UDim2.new(0,-50,1,-50),function() ToggleMenu() end) 
+	L=Button(parent,"OPEN",UDim2.new(0,50,0,50),UDim2.new(0,-50,1,-50),function() ToggleMenu() end) 
     ApplyChromeEffect(L, 10, 3) 
 	L.TextColor3 = Color3.fromRGB(255, 255, 255) 
 	L.TextWrapped = false 
@@ -463,7 +685,9 @@ function GenerateMenu(parent)
     GeneratePage2()
     GeneratePage3()
     GeneratePage4()
-    GeneratePage5() 
+    GeneratePage5()
+    
+    GenerateAdminPage()
 
 	Label(parent,"Gix Hub",UDim2.new(1,0,0,15),UDim2.new(0,0,1,-15)).TextTransparency = 0.5 
 	return D 
@@ -498,4 +722,3 @@ if TargetParent ~= nil then
 		end) 
 	end)
 end
-
