@@ -405,11 +405,11 @@ function GeneratePage4()
 
     Label(ScrollPage4,"---Version 1.5---",UDim2.new(1,0,0,35),UDim2.new(0,0,0,35*P4Id.Value)) 
     P4Id.Value = P4Id.Value + 1
-    Label(ScrollPage4,"---Mini Update---",UDim2.new(1,0,0,35),UDim2.new(0,0,0,35*P4Id.Value)) 
+    Label(ScrollPage4,"---More Mini Update---",UDim2.new(1,0,0,35),UDim2.new(0,0,0,35*P4Id.Value)) 
     P4Id.Value = P4Id.Value + 1
-    Label(ScrollPage4,"---Added New Page (Admin)---",UDim2.new(1,0,0,35),UDim2.new(0,0,0,35*P4Id.Value)) 
+    Label(ScrollPage4,"---Added Sandevistan On Admin Page---",UDim2.new(1,0,0,35),UDim2.new(0,0,0,35*P4Id.Value)) 
     P4Id.Value = P4Id.Value + 1
-    Label(ScrollPage4,"---Added Admin Animation inside Admin Page---",UDim2.new(1,0,0,35),UDim2.new(0,0,0,35*P4Id.Value)) 
+    Label(ScrollPage4,"---Added Naoya SFX On Admin Page---",UDim2.new(1,0,0,35),UDim2.new(0,0,0,35*P4Id.Value)) 
     P4Id.Value = P4Id.Value + 1
     Label(ScrollPage4,"---Upcoming Don Lorenzo Animation---",UDim2.new(1,0,0,35),UDim2.new(0,0,0,35*P4Id.Value)) 
     P4Id.Value = P4Id.Value + 1
