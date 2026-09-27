@@ -17,10 +17,13 @@ local NAOYA_CHAR_DELAY = 0
 local SKIP_NAOYA_START = 0        
 local STOP_NAOYA_EARLY = 0        
 
-local METAVISION_OUTLINE_COLOR = Color3.fromRGB(0, 195, 255) 
-local METAVISION_FILL_TRANSPARENCY = 1                       
-local METAVISION_OUTLINE_TRANSPARENCY = 0                    
-local METAVISION_FOV = 85                                    
+local GENOS_CHAR_DELAY = 0        
+local SKIP_GENOS_START = 0        
+local STOP_GENOS_EARLY = 0        
+
+local SANDE_CHAR_DELAY = 0
+local SKIP_SANDE_START = 0
+local STOP_SANDE_EARLY = 0
 
 if not isfile("Suiryu.rbxmx") then
 	writefile("Suiryu.rbxmx", game:HttpGet("https://github.com/Scripterblabla/No-needd/raw/refs/heads/main/Suiryu.Rbxmx"))
@@ -34,12 +37,32 @@ if not isfile("Judas.rbxm") then
 	writefile("Judas.rbxm", game:HttpGet("https://github.com/Scripterblabla/No-needd/raw/refs/heads/main/Judas.rbxm"))
 end
 
-if not isfile("MetaMusic.mp3") then
-	writefile("MetaMusic.mp3", game:HttpGet("https://github.com/Scripterblabla/No-needd/raw/refs/heads/main/S%C3%A3o%20Paulo%20%5BaBkFGDjjf0c%5D.mp3"))
+if not isfile("Genos.rbxmx") then
+	writefile("Genos.rbxmx", game:HttpGet("https://github.com/Scripterblabla/No-needd/raw/refs/heads/main/Genos.Rbxmx"))
 end
 
 if not isfile("JudasMusic.mp3") then
 	writefile("JudasMusic.mp3", game:HttpGet("https://github.com/Scripterblabla/No-needd/raw/refs/heads/main/JUDAS%20x%20Hollow%20Purple%20_%20Gojo%20vs%20Sukuna%20Theme%20(Jujutsu%20Kaisen)%20EPIC%20VERSION%20%5BztrMeWinRmE%5D.mp3"))
+end
+
+if not isfile("HeiOfSFX.mp3") then
+	writefile("HeiOfSFX.mp3", game:HttpGet("https://github.com/Scripterblabla/No-needd/raw/refs/heads/main/Hei%20of%20SFX.mp3"))
+end
+
+if not isfile("SandevistanAnim.rbxmx") then
+	writefile("SandevistanAnim.rbxmx", game:HttpGet("https://github.com/Scripterblabla/Gix-Hub-By-Scripterblabla/raw/refs/heads/main/Sandevistan.Rbxmx"))
+end
+
+if not isfile("SandeSFX.mp3") then
+	writefile("SandeSFX.mp3", game:HttpGet("https://github.com/Scripterblabla/Gix-Hub-By-Scripterblabla/raw/refs/heads/main/Sande%20SFX.mp3"))
+end
+
+if not isfile("SandevistanFrames.rbxmx") then
+	writefile("SandevistanFrames.rbxmx", game:HttpGet("https://github.com/Scripterblabla/Gix-Hub-By-Scripterblabla/raw/refs/heads/main/Sandevistan%20Frames.Rbxmx"))
+end
+
+if not isfile("SandevistanVictim.rbxmx") then
+	writefile("SandevistanVictim.rbxmx", game:HttpGet("https://github.com/Scripterblabla/Gix-Hub-By-Scripterblabla/raw/refs/heads/main/Sandevistan%20Victim.Rbxmx"))
 end
 
 local EngineCall = loadstring(game:HttpGet("https://raw.githubusercontent.com/ian49972/Animator/refs/heads/main/RobAnimator"))()
@@ -52,13 +75,10 @@ end
 local suiryuAnimAsset = game:GetObjects(getcustomasset("Suiryu.rbxmx"))[1]
 local naoyaAnimAsset = game:GetObjects(getcustomasset("HeiOfNaoya.rbxmx"))[1]
 local judasAnimAsset = game:GetObjects(getcustomasset("Judas.rbxm"))[1]
-
-local metaSound = Instance.new("Sound")
-metaSound.Name = "MetaVisionTheme"
-metaSound.SoundId = getcustomasset("MetaMusic.mp3")
-metaSound.Looped = true
-metaSound.Volume = 1.5
-metaSound.Parent = SoundService
+local genosAnimAsset = game:GetObjects(getcustomasset("Genos.rbxmx"))[1]
+local sandeAnimAsset = game:GetObjects(getcustomasset("SandevistanAnim.rbxmx"))[1]
+local sandeFramesAsset = game:GetObjects(getcustomasset("SandevistanFrames.rbxmx"))[1]
+local sandeVictimAsset = game:GetObjects(getcustomasset("SandevistanVictim.rbxmx"))[1]
 
 local judasSound = Instance.new("Sound")
 judasSound.Name = "JudasTheme"
@@ -66,6 +86,20 @@ judasSound.SoundId = getcustomasset("JudasMusic.mp3")
 judasSound.Looped = true
 judasSound.Volume = 1.5
 judasSound.Parent = SoundService
+
+local naoyaSound = Instance.new("Sound")
+naoyaSound.Name = "NaoyaSFX"
+naoyaSound.SoundId = getcustomasset("HeiOfSFX.mp3")
+naoyaSound.Looped = false
+naoyaSound.Volume = 2.5 
+naoyaSound.Parent = SoundService
+
+local sandeSound = Instance.new("Sound")
+sandeSound.Name = "SandeSFX"
+sandeSound.SoundId = getcustomasset("SandeSFX.mp3")
+sandeSound.Looped = false
+sandeSound.Volume = 2.5 
+sandeSound.Parent = SoundService
 
 local function getKeyframeSequence(obj)
 	if not obj then return nil end
@@ -76,6 +110,9 @@ end
 local suiryuAnimSeq = getKeyframeSequence(suiryuAnimAsset)
 local naoyaAnimSeq = getKeyframeSequence(naoyaAnimAsset)
 local judasAnimSeq = getKeyframeSequence(judasAnimAsset)
+local genosAnimSeq = getKeyframeSequence(genosAnimAsset)
+local sandeAnimSeq = getKeyframeSequence(sandeAnimAsset)
+local sandeVictimAnimSeq = getKeyframeSequence(sandeVictimAsset)
 
 local function checkLength(seq)
 	local length = 0
@@ -90,91 +127,56 @@ end
 local suiryuAnimLength = checkLength(suiryuAnimSeq)
 local naoyaAnimLength = checkLength(naoyaAnimSeq)
 local judasAnimLength = checkLength(judasAnimSeq)
+local genosAnimLength = checkLength(genosAnimSeq)
+local sandeAnimLength = checkLength(sandeAnimSeq)
 
 if suiryuAnimLength == 0 then suiryuAnimLength = 4 end
 if naoyaAnimLength == 0 then naoyaAnimLength = 4 end
 if judasAnimLength == 0 then judasAnimLength = 4 end
+if genosAnimLength == 0 then genosAnimLength = 4 end
+if sandeAnimLength == 0 then sandeAnimLength = 4 end
 
 local PlayerModule = require(player:WaitForChild("PlayerScripts"):WaitForChild("PlayerModule"))
 local Controls = PlayerModule:GetControls()
 
-local metavisionActive = false
-local metavisionCC = nil
+local function getNearestPlayer(originPos, radius)
+	local nearestChar = nil
+	local shortestDist = radius
 
-local function applyMetavisionToCharacter(char)
-	if not char or char:FindFirstChild("MetavisionHighlight") or char == player.Character then return end
-	local highlight = Instance.new("Highlight")
-	highlight.Name = "MetavisionHighlight"
-	highlight.Adornee = char
-	highlight.FillTransparency = METAVISION_FILL_TRANSPARENCY          
-	highlight.OutlineTransparency = METAVISION_OUTLINE_TRANSPARENCY    
-	highlight.OutlineColor = METAVISION_OUTLINE_COLOR
-	highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
-	highlight.Parent = char
-end
-
-local function removeMetavisionFromCharacter(char)
-	if not char then return end
-	local highlight = char:FindFirstChild("MetavisionHighlight")
-	if highlight then
-		highlight:Destroy()
-	end
-end
-
-local function toggleMetavision(state)
-	metavisionActive = state
-	
-	if metavisionActive then
-		metaSound:Play()
-		if not metavisionCC then
-			metavisionCC = Instance.new("ColorCorrectionEffect")
-			metavisionCC.Name = "MetavisionCC"
-			metavisionCC.Saturation = -0.6
-			metavisionCC.Contrast = 0.4
-			metavisionCC.TintColor = Color3.fromRGB(180, 225, 255)
-			metavisionCC.Parent = Lighting
-		end
-		
-		for _, p in ipairs(Players:GetPlayers()) do
-			if p ~= player and p.Character then
-				applyMetavisionToCharacter(p.Character)
+	for _, p in pairs(Players:GetPlayers()) do
+		if p ~= player and p.Character then
+			local pHrp = p.Character:FindFirstChild("HumanoidRootPart")
+			local pHum = p.Character:FindFirstChildOfClass("Humanoid")
+			if pHrp and pHum and pHum.Health > 0 and pHum.RigType == Enum.HumanoidRigType.R6 then
+				local dist = (pHrp.Position - originPos).Magnitude
+				if dist <= shortestDist then
+					shortestDist = dist
+					nearestChar = p.Character
+				end
 			end
 		end
-		
-		TweenService:Create(camera, TweenInfo.new(0.3), {FieldOfView = METAVISION_FOV}):Play()
-	else
-		metaSound:Stop()
-		if metavisionCC then
-			metavisionCC:Destroy()
-			metavisionCC = nil
-		end
-		
-		for _, p in ipairs(Players:GetPlayers()) do
-			if p.Character then
-				removeMetavisionFromCharacter(p.Character)
-			end
-		end
-		
-		TweenService:Create(camera, TweenInfo.new(0.3), {FieldOfView = 70}):Play()
 	end
+	return nearestChar
 end
 
-Players.PlayerAdded:Connect(function(p)
-	p.CharacterAdded:Connect(function(char)
-		if metavisionActive and p ~= player then
-			task.wait(0.5)
-			applyMetavisionToCharacter(char)
-		end
-	end)
-end)
+local function createR6DummyClone(baseChar)
+	local oldArch = baseChar.Archivable
+	baseChar.Archivable = true
+	local dummy = baseChar:Clone()
+	baseChar.Archivable = oldArch
 
-for _, p in ipairs(Players:GetPlayers()) do
-	p.CharacterAdded:Connect(function(char)
-		if metavisionActive and p ~= player then
-			task.wait(0.5)
-			applyMetavisionToCharacter(char)
+	for _, v in pairs(dummy:GetDescendants()) do
+		if v:IsA("Script") or v:IsA("LocalScript") or v:IsA("Tool") or v:IsA("Sound") or v:IsA("Accessory") or v:IsA("Shirt") or v:IsA("Pants") or v:IsA("ShirtGraphic") or v:IsA("Decal") or v:IsA("CharacterMesh") or v:IsA("BodyColors") then
+			v:Destroy()
+		elseif v:IsA("BasePart") then
+			v.Color = Color3.fromRGB(163, 162, 165)
+			v.Material = Enum.Material.SmoothPlastic
+			v.Transparency = 0
+			if v.Name == "HumanoidRootPart" then v.Transparency = 1 end
 		end
-	end)
+	end
+	dummy.Name = "SandevistanVictimDummy"
+	return dummy
 end
 
 local toolSuiryu = Instance.new("Tool")
@@ -189,26 +191,26 @@ local activeSuiryuAnim = nil
 toolSuiryu.Activated:Connect(function()
 	if debounceSuiryu or not PlayKeyframeSequence then return end
 	debounceSuiryu = true
-
 	local character = player.Character
 	if not character then debounceSuiryu = false return end
-
 	local humanoid = character:FindFirstChildOfClass("Humanoid")
 	local hrp = character:FindFirstChild("HumanoidRootPart")
 	local head = character:FindFirstChild("Head")
 	if not humanoid or not hrp or not head then debounceSuiryu = false return end
-
-	if activeSuiryuAnim then
-		pcall(function() activeSuiryuAnim:Stop(); activeSuiryuAnim:RestoreAnimator() end)
-		activeSuiryuAnim = nil
-	end
+	if activeSuiryuAnim then pcall(function() activeSuiryuAnim:Stop(); activeSuiryuAnim:RestoreAnimator() end) activeSuiryuAnim = nil end
 
 	Controls:Disable()
 	local oldSpeed = humanoid.WalkSpeed
 	local oldJump = humanoid.UseJumpPower and humanoid.JumpPower or humanoid.JumpHeight
+	local oldAnchored = hrp.Anchored 
+	
 	humanoid.WalkSpeed = 0
 	if humanoid.UseJumpPower then humanoid.JumpPower = 0 else humanoid.JumpHeight = 0 end
-
+	
+	hrp.AssemblyLinearVelocity = Vector3.zero
+	hrp.AssemblyAngularVelocity = Vector3.zero
+	hrp.Anchored = true
+	
 	local originalCamSubject = camera.CameraSubject
 	camera.CameraSubject = head
 
@@ -216,31 +218,25 @@ toolSuiryu.Activated:Connect(function()
 		if SUIRYU_CHAR_DELAY > 0 then task.wait(SUIRYU_CHAR_DELAY) end
 		if suiryuAnimSeq and character then
 			activeSuiryuAnim = PlayKeyframeSequence(character, suiryuAnimSeq, 1)
-			if SKIP_SUIRYU_START > 0 then
-				pcall(function() activeSuiryuAnim.TimePosition = SKIP_SUIRYU_START end)
-			end
+			if SKIP_SUIRYU_START > 0 then pcall(function() activeSuiryuAnim.TimePosition = SKIP_SUIRYU_START end) end
 		end
 	end)
 
 	local totalWaitTime = (suiryuAnimLength - SKIP_SUIRYU_START) + SUIRYU_CHAR_DELAY
-	if STOP_SUIRYU_EARLY > 0 then
-		totalWaitTime = STOP_SUIRYU_EARLY
-	end
-
+	if STOP_SUIRYU_EARLY > 0 then totalWaitTime = STOP_SUIRYU_EARLY end
 	task.wait(totalWaitTime)
 
-	if activeSuiryuAnim then
-		pcall(function() activeSuiryuAnim:Stop(); activeSuiryuAnim:RestoreAnimator() end)
-		activeSuiryuAnim = nil
-	end
-
+	if activeSuiryuAnim then pcall(function() activeSuiryuAnim:Stop(); activeSuiryuAnim:RestoreAnimator() end) activeSuiryuAnim = nil end
 	if originalCamSubject then camera.CameraSubject = originalCamSubject end
 
+	hrp.AssemblyLinearVelocity = Vector3.zero
+	hrp.AssemblyAngularVelocity = Vector3.zero
+	hrp.Anchored = oldAnchored
+	
 	Controls:Enable()
 	humanoid.WalkSpeed = oldSpeed
 	if humanoid.UseJumpPower then humanoid.JumpPower = oldJump else humanoid.JumpHeight = oldJump end
 	if not humanoid:FindFirstChild("Animator") then Instance.new("Animator", humanoid) end
-
 	debounceSuiryu = false
 end)
 
@@ -256,69 +252,117 @@ local activeNaoyaAnim = nil
 toolNaoya.Activated:Connect(function()
 	if debounceNaoya or not PlayKeyframeSequence then return end
 	debounceNaoya = true
-
 	local character = player.Character
 	if not character then debounceNaoya = false return end
-
 	local humanoid = character:FindFirstChildOfClass("Humanoid")
 	local hrp = character:FindFirstChild("HumanoidRootPart")
 	local head = character:FindFirstChild("Head")
 	if not humanoid or not hrp or not head then debounceNaoya = false return end
-
-	if activeNaoyaAnim then
-		pcall(function() activeNaoyaAnim:Stop(); activeNaoyaAnim:RestoreAnimator() end)
-		activeNaoyaAnim = nil
-	end
+	if activeNaoyaAnim then pcall(function() activeNaoyaAnim:Stop(); activeNaoyaAnim:RestoreAnimator() end) activeNaoyaAnim = nil end
 
 	Controls:Disable()
 	local oldSpeed = humanoid.WalkSpeed
 	local oldJump = humanoid.UseJumpPower and humanoid.JumpPower or humanoid.JumpHeight
+	local oldAnchored = hrp.Anchored
+	
 	humanoid.WalkSpeed = 0
 	if humanoid.UseJumpPower then humanoid.JumpPower = 0 else humanoid.JumpHeight = 0 end
-
+	
+	hrp.AssemblyLinearVelocity = Vector3.zero
+	hrp.AssemblyAngularVelocity = Vector3.zero
+	hrp.Anchored = true
+	
 	local originalCamSubject = camera.CameraSubject
 	camera.CameraSubject = head
+	
+	naoyaSound:Play()
 
 	task.spawn(function()
 		if NAOYA_CHAR_DELAY > 0 then task.wait(NAOYA_CHAR_DELAY) end
 		if naoyaAnimSeq and character then
 			activeNaoyaAnim = PlayKeyframeSequence(character, naoyaAnimSeq, 1)
-			if SKIP_NAOYA_START > 0 then
-				pcall(function() activeNaoyaAnim.TimePosition = SKIP_NAOYA_START end)
-			end
+			if SKIP_NAOYA_START > 0 then pcall(function() activeNaoyaAnim.TimePosition = SKIP_NAOYA_START end) end
 		end
 	end)
 
 	local totalWaitTime = (naoyaAnimLength - SKIP_NAOYA_START) + NAOYA_CHAR_DELAY
-	if STOP_NAOYA_EARLY > 0 then
-		totalWaitTime = STOP_NAOYA_EARLY
-	end
-
+	if STOP_NAOYA_EARLY > 0 then totalWaitTime = STOP_NAOYA_EARLY end
 	task.wait(totalWaitTime)
 
-	if activeNaoyaAnim then
-		pcall(function() activeNaoyaAnim:Stop(); activeNaoyaAnim:RestoreAnimator() end)
-		activeNaoyaAnim = nil
-	end
-
+	if activeNaoyaAnim then pcall(function() activeNaoyaAnim:Stop(); activeNaoyaAnim:RestoreAnimator() end) activeNaoyaAnim = nil end
+	naoyaSound:Stop()
 	if originalCamSubject then camera.CameraSubject = originalCamSubject end
 
+	hrp.AssemblyLinearVelocity = Vector3.zero
+	hrp.AssemblyAngularVelocity = Vector3.zero
+	hrp.Anchored = oldAnchored
+	
 	Controls:Enable()
 	humanoid.WalkSpeed = oldSpeed
 	if humanoid.UseJumpPower then humanoid.JumpPower = oldJump else humanoid.JumpHeight = oldJump end
 	if not humanoid:FindFirstChild("Animator") then Instance.new("Animator", humanoid) end
-
 	debounceNaoya = false
 end)
 
-local toolMetavision = Instance.new("Tool")
-toolMetavision.Name = "6 Eyes"
-toolMetavision.RequiresHandle = false
-toolMetavision.CanBeDropped = false
-toolMetavision.Parent = player:WaitForChild("Backpack")
+local toolGenos = Instance.new("Tool")
+toolGenos.Name = "Genos"
+toolGenos.RequiresHandle = false
+toolGenos.CanBeDropped = false
+toolGenos.Parent = player:WaitForChild("Backpack")
 
-toolMetavision.Activated:Connect(function()
-	toggleMetavision(not metavisionActive)
+local debounceGenos = false
+local activeGenosAnim = nil
+
+toolGenos.Activated:Connect(function()
+	if debounceGenos or not PlayKeyframeSequence then return end
+	debounceGenos = true
+	local character = player.Character
+	if not character then debounceGenos = false return end
+	local humanoid = character:FindFirstChildOfClass("Humanoid")
+	local hrp = character:FindFirstChild("HumanoidRootPart")
+	local head = character:FindFirstChild("Head")
+	if not humanoid or not hrp or not head then debounceGenos = false return end
+	if activeGenosAnim then pcall(function() activeGenosAnim:Stop(); activeGenosAnim:RestoreAnimator() end) activeGenosAnim = nil end
+
+	Controls:Disable()
+	local oldSpeed = humanoid.WalkSpeed
+	local oldJump = humanoid.UseJumpPower and humanoid.JumpPower or humanoid.JumpHeight
+	local oldAnchored = hrp.Anchored
+	
+	humanoid.WalkSpeed = 0
+	if humanoid.UseJumpPower then humanoid.JumpPower = 0 else humanoid.JumpHeight = 0 end
+	
+	hrp.AssemblyLinearVelocity = Vector3.zero
+	hrp.AssemblyAngularVelocity = Vector3.zero
+	hrp.Anchored = true
+	
+	local originalCamSubject = camera.CameraSubject
+	camera.CameraSubject = head
+
+	task.spawn(function()
+		if GENOS_CHAR_DELAY > 0 then task.wait(GENOS_CHAR_DELAY) end
+		if genosAnimSeq and character then
+			activeGenosAnim = PlayKeyframeSequence(character, genosAnimSeq, 1)
+			if SKIP_GENOS_START > 0 then pcall(function() activeGenosAnim.TimePosition = SKIP_GENOS_START end) end
+		end
+	end)
+
+	local totalWaitTime = (genosAnimLength - SKIP_GENOS_START) + GENOS_CHAR_DELAY
+	if STOP_GENOS_EARLY > 0 then totalWaitTime = STOP_GENOS_EARLY end
+	task.wait(totalWaitTime)
+
+	if activeGenosAnim then pcall(function() activeGenosAnim:Stop(); activeGenosAnim:RestoreAnimator() end) activeGenosAnim = nil end
+	if originalCamSubject then camera.CameraSubject = originalCamSubject end
+
+	hrp.AssemblyLinearVelocity = Vector3.zero
+	hrp.AssemblyAngularVelocity = Vector3.zero
+	hrp.Anchored = oldAnchored
+	
+	Controls:Enable()
+	humanoid.WalkSpeed = oldSpeed
+	if humanoid.UseJumpPower then humanoid.JumpPower = oldJump else humanoid.JumpHeight = oldJump end
+	if not humanoid:FindFirstChild("Animator") then Instance.new("Animator", humanoid) end
+	debounceGenos = false
 end)
 
 local toolJudas = Instance.new("Tool")
@@ -333,6 +377,7 @@ local activeJudasAnim = nil
 local activeDummyAnim = nil
 local judasOldSpeed = 16
 local judasOldJump = 50
+local judasOldAnchored = false
 local freezeConnection = nil
 
 local function createGreyDummy(baseChar)
@@ -340,7 +385,6 @@ local function createGreyDummy(baseChar)
 	baseChar.Archivable = true
 	local dummy = baseChar:Clone()
 	baseChar.Archivable = oldArch
-	
 	for _, v in pairs(dummy:GetDescendants()) do
 		if v:IsA("Script") or v:IsA("LocalScript") or v:IsA("Tool") or v:IsA("Accessory") or v:IsA("Shirt") or v:IsA("Pants") or v:IsA("ShirtGraphic") or v:IsA("Decal") or v:IsA("CharacterMesh") or v:IsA("BodyColors") then
 			v:Destroy()
@@ -348,9 +392,7 @@ local function createGreyDummy(baseChar)
 			v.Color = Color3.fromRGB(163, 162, 165) 
 			v.Material = Enum.Material.SmoothPlastic
 			v.Transparency = 0
-			if v.Name == "HumanoidRootPart" then
-				v.Transparency = 1
-			end
+			if v.Name == "HumanoidRootPart" then v.Transparency = 1 end
 		end
 	end
 	dummy.Name = "JudasVictimDummy"
@@ -360,10 +402,8 @@ end
 toolJudas.Activated:Connect(function()
 	local character = player.Character
 	if not character or not PlayKeyframeSequence then return end
-	
 	local humanoid = character:FindFirstChildOfClass("Humanoid")
 	local hrp = character:FindFirstChild("HumanoidRootPart")
-	
 	if not humanoid or not hrp then return end
 	
 	judasActive = not judasActive
@@ -372,27 +412,26 @@ toolJudas.Activated:Connect(function()
 		Controls:Disable()
 		judasOldSpeed = humanoid.WalkSpeed
 		judasOldJump = humanoid.UseJumpPower and humanoid.JumpPower or humanoid.JumpHeight
+		judasOldAnchored = hrp.Anchored
+		
 		humanoid.WalkSpeed = 0
 		if humanoid.UseJumpPower then humanoid.JumpPower = 0 else humanoid.JumpHeight = 0 end
 		
-		judasDummy = createGreyDummy(character)
+		hrp.AssemblyLinearVelocity = Vector3.zero
+		hrp.AssemblyAngularVelocity = Vector3.zero
+		hrp.Anchored = true
 		
+		judasDummy = createGreyDummy(character)
 		local dummyHRP = judasDummy:FindFirstChild("HumanoidRootPart")
 		if dummyHRP then
 			dummyHRP.CFrame = hrp.CFrame * CFrame.new(0, 0, -13) * CFrame.Angles(0, math.pi, 0)
 			dummyHRP.Anchored = true
 		end
-		
 		judasDummy.Parent = workspace
-		
 		judasSound:Play()
 		
-		if character and judasAnimSeq then
-			activeJudasAnim = PlayKeyframeSequence(character, judasAnimSeq, 1)
-		end
-		if judasDummy and judasAnimSeq then
-			activeDummyAnim = PlayKeyframeSequence(judasDummy, judasAnimSeq, 1)
-		end
+		if character and judasAnimSeq then activeJudasAnim = PlayKeyframeSequence(character, judasAnimSeq, 1) end
+		if judasDummy and judasAnimSeq then activeDummyAnim = PlayKeyframeSequence(judasDummy, judasAnimSeq, 1) end
 		
 		task.spawn(function()
 			task.wait(judasAnimLength - 0.05)
@@ -403,26 +442,243 @@ toolJudas.Activated:Connect(function()
 				end)
 			end
 		end)
-		
 	else
-		if freezeConnection then 
-			freezeConnection:Disconnect() 
-			freezeConnection = nil 
-		end
-		
+		if freezeConnection then freezeConnection:Disconnect() freezeConnection = nil end
 		if activeJudasAnim then pcall(function() activeJudasAnim:Stop(); activeJudasAnim:RestoreAnimator() end) activeJudasAnim = nil end
 		if activeDummyAnim then pcall(function() activeDummyAnim:Stop(); activeDummyAnim:RestoreAnimator() end) activeDummyAnim = nil end
-		
-		if judasDummy then
-			judasDummy:Destroy()
-			judasDummy = nil
-		end
-		
+		if judasDummy then judasDummy:Destroy() judasDummy = nil end
 		judasSound:Stop()
+		
+		hrp.AssemblyLinearVelocity = Vector3.zero
+		hrp.AssemblyAngularVelocity = Vector3.zero
+		hrp.Anchored = judasOldAnchored
 		
 		Controls:Enable()
 		humanoid.WalkSpeed = judasOldSpeed
 		if humanoid.UseJumpPower then humanoid.JumpPower = judasOldJump else humanoid.JumpHeight = judasOldJump end
 		if not humanoid:FindFirstChild("Animator") then Instance.new("Animator", humanoid) end
 	end
+end)
+
+local toolSandevistan = Instance.new("Tool")
+toolSandevistan.Name = "Sandevistan"
+toolSandevistan.RequiresHandle = false
+toolSandevistan.CanBeDropped = false
+toolSandevistan.Parent = player:WaitForChild("Backpack")
+
+local debounceSande = false
+local activeSandeAnim = nil
+local activeSandeVictimAnim = nil
+local sandeIsRunning = false
+
+local function spawnAfterimage(char)
+	local oldArch = char.Archivable
+	char.Archivable = true
+	local clone = char:Clone()
+	char.Archivable = oldArch
+	
+	local trailColors = {
+		Color3.fromRGB(0, 255, 255),
+		Color3.fromRGB(255, 0, 0),
+		Color3.fromRGB(0, 128, 255),
+		Color3.fromRGB(255, 85, 255),
+		Color3.fromRGB(255, 215, 0),
+		Color3.fromRGB(255, 255, 255)
+	}
+	local randomColor = trailColors[math.random(1, #trailColors)]
+	
+	for _, v in pairs(clone:GetDescendants()) do
+		if v:IsA("BasePart") then
+			v.Anchored = true
+			v.CanCollide = false
+			v.CanQuery = false      
+			v.CanTouch = false      
+			v.Massless = true       
+			v.CastShadow = false    
+			
+			v.Material = Enum.Material.ForceField 
+			v.Color = randomColor 
+			
+			if v.Name == "HumanoidRootPart" then
+				v.Transparency = 1
+			else
+				v.Transparency = 0.1 
+				local tw = TweenService:Create(v, TweenInfo.new(4), {Transparency = 1})
+				tw:Play()
+			end
+		elseif v:IsA("Script") or v:IsA("LocalScript") or v:IsA("Tool") or v:IsA("Sound") or v:IsA("Humanoid") or v:IsA("Decal") or v:IsA("Texture") then
+			v:Destroy()
+		end
+	end
+	
+	clone.Parent = workspace
+	
+	task.delay(0.4, function()
+		if clone then clone:Destroy() end
+	end)
+end
+
+toolSandevistan.Activated:Connect(function()
+	if debounceSande or not PlayKeyframeSequence then return end
+	debounceSande = true
+	sandeIsRunning = true
+
+	local character = player.Character
+	if not character then debounceSande = false return end
+	local humanoid = character:FindFirstChildOfClass("Humanoid")
+	local hrp = character:FindFirstChild("HumanoidRootPart")
+	local head = character:FindFirstChild("Head")
+	if not humanoid or not hrp or not head then debounceSande = false return end
+
+	if activeSandeAnim then
+		pcall(function() activeSandeAnim:Stop(); activeSandeAnim:RestoreAnimator() end)
+		activeSandeAnim = nil
+	end
+
+	Controls:Disable()
+	local oldSpeed = humanoid.WalkSpeed
+	local oldJump = humanoid.UseJumpPower and humanoid.JumpPower or humanoid.JumpHeight
+	local oldAnchored = hrp.Anchored
+	
+	humanoid.WalkSpeed = 0
+	if humanoid.UseJumpPower then humanoid.JumpPower = 0 else humanoid.JumpHeight = 0 end
+
+	hrp.AssemblyLinearVelocity = Vector3.zero
+	hrp.AssemblyAngularVelocity = Vector3.zero
+	hrp.Anchored = true
+
+	local originalCamSubject = camera.CameraSubject
+	camera.CameraSubject = head
+
+	local victimChar = getNearestPlayer(hrp.Position, 2000)
+	local isDummyCreated = false
+
+	if not victimChar then
+		isDummyCreated = true
+		victimChar = createR6DummyClone(character)
+		victimChar.Parent = workspace
+	end
+
+	local victimHrp = victimChar:FindFirstChild("HumanoidRootPart")
+	local victimOldAnchored = false
+
+	if victimHrp then
+		victimOldAnchored = victimHrp.Anchored
+		victimHrp.AssemblyLinearVelocity = Vector3.zero
+		victimHrp.AssemblyAngularVelocity = Vector3.zero
+		victimHrp.Anchored = true
+
+		victimHrp.CFrame = hrp.CFrame * CFrame.new(0, 0, -3.0) * CFrame.Angles(0, math.pi, 0)
+	end
+
+	task.spawn(function()
+		pcall(function()
+			loadstring(game:HttpGet("https://raw.githubusercontent.com/Scripterblabla/Gix-Hub-By-Scripterblabla/refs/heads/main/Sande%20Camera%20animation"))()
+		end)
+	end)
+	
+	sandeSound:Play()
+
+	task.spawn(function()
+		local framesGui = sandeFramesAsset:Clone()
+		if not framesGui:IsA("ScreenGui") then
+			local sg = Instance.new("ScreenGui")
+			framesGui.Parent = sg
+			framesGui = sg
+		end
+		framesGui.Enabled = false
+		framesGui.Parent = PlayerGui
+		
+		task.wait(2.6) 
+		framesGui.Enabled = true
+		task.wait(1.3) 
+		framesGui.Enabled = false
+		
+		task.wait(15.5) 
+		framesGui.Enabled = true
+		task.wait(1.0) 
+		framesGui:Destroy()
+	end)
+
+	task.spawn(function()
+		local greenEffect = Instance.new("ColorCorrectionEffect")
+		greenEffect.TintColor = Color3.fromRGB(110, 255, 110)
+		greenEffect.Enabled = false
+		greenEffect.Parent = Lighting
+		
+		task.wait(2.7) 
+		greenEffect.Enabled = true
+		
+		task.wait(17.1) 
+		
+		if greenEffect then
+			greenEffect.Enabled = false
+			greenEffect:Destroy()
+		end
+	end)
+
+	task.spawn(function()
+		while sandeIsRunning do
+			if character and hrp then
+				spawnAfterimage(character)
+			end
+			task.wait(0.08) 
+		end
+	end)
+
+	task.spawn(function()
+		if SANDE_CHAR_DELAY > 0 then task.wait(SANDE_CHAR_DELAY) end
+		if sandeAnimSeq and character then
+			activeSandeAnim = PlayKeyframeSequence(character, sandeAnimSeq, 1)
+			if SKIP_SANDE_START > 0 then
+				pcall(function() activeSandeAnim.TimePosition = SKIP_SANDE_START end)
+			end
+		end
+		if sandeVictimAnimSeq and victimChar then
+			activeSandeVictimAnim = PlayKeyframeSequence(victimChar, sandeVictimAnimSeq, 1)
+			if SKIP_SANDE_START > 0 then
+				pcall(function() activeSandeVictimAnim.TimePosition = SKIP_SANDE_START end)
+			end
+		end
+	end)
+
+	local totalWaitTime = (sandeAnimLength - SKIP_SANDE_START) + SANDE_CHAR_DELAY
+	if STOP_SANDE_EARLY > 0 then totalWaitTime = STOP_SANDE_EARLY end
+
+	task.wait(totalWaitTime)
+
+	sandeIsRunning = false
+	if activeSandeAnim then
+		pcall(function() activeSandeAnim:Stop(); activeSandeAnim:RestoreAnimator() end)
+		activeSandeAnim = nil
+	end
+	if activeSandeVictimAnim then
+		pcall(function() activeSandeVictimAnim:Stop(); activeSandeVictimAnim:RestoreAnimator() end)
+		activeSandeVictimAnim = nil
+	end
+
+	if isDummyCreated then
+		if victimChar then victimChar:Destroy() end
+	else
+		if victimHrp then
+			victimHrp.AssemblyLinearVelocity = Vector3.zero
+			victimHrp.AssemblyAngularVelocity = Vector3.zero
+			victimHrp.Anchored = victimOldAnchored
+		end
+	end
+
+	sandeSound:Stop()
+
+	if originalCamSubject then camera.CameraSubject = originalCamSubject end
+
+	hrp.AssemblyLinearVelocity = Vector3.zero
+	hrp.AssemblyAngularVelocity = Vector3.zero
+	hrp.Anchored = oldAnchored
+	
+	Controls:Enable()
+	humanoid.WalkSpeed = oldSpeed
+	if humanoid.UseJumpPower then humanoid.JumpPower = oldJump else humanoid.JumpHeight = oldJump end
+	if not humanoid:FindFirstChild("Animator") then Instance.new("Animator", humanoid) end
+
+	debounceSande = false
 end)
