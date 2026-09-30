@@ -30,8 +30,8 @@ local ScriptAnimations = {
         Loadstring = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/Scripterblabla/FECLIENT/main/Wukong%20Monkey%20King"))()]]
     },
     {
-        NameButton = "KJ", 
-        Loadstring = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/Scripterblabla/FECLIENT/refs/heads/main/KJ%20Larping"))()]]
+        NameButton = "KJ (Rework)", 
+        Loadstring = [[loadstring(game:HttpGet("https://raw.githubusercontent.com/Scripterblabla/No-needd/refs/heads/main/KEJE%20REWORK"))()]]
     },
     {
         NameButton = "Liu Kang Wc", 
@@ -403,15 +403,15 @@ function GeneratePage4()
     local P4Id = Instance.new("IntValue")
     P4Id.Value = 0
 
-    Label(ScrollPage4,"---Version 1.5---",UDim2.new(1,0,0,35),UDim2.new(0,0,0,35*P4Id.Value)) 
+    Label(ScrollPage4,"---Version 1.6---",UDim2.new(1,0,0,35),UDim2.new(0,0,0,35*P4Id.Value)) 
     P4Id.Value = P4Id.Value + 1
-    Label(ScrollPage4,"---More Mini Update---",UDim2.new(1,0,0,35),UDim2.new(0,0,0,35*P4Id.Value)) 
+    Label(ScrollPage4,"---KJ REWORK Update---",UDim2.new(1,0,0,35),UDim2.new(0,0,0,35*P4Id.Value)) 
     P4Id.Value = P4Id.Value + 1
-    Label(ScrollPage4,"---Added Sandevistan On Admin Page---",UDim2.new(1,0,0,35),UDim2.new(0,0,0,35*P4Id.Value)) 
+    Label(ScrollPage4,"---Rework 20 Series animation---",UDim2.new(1,0,0,35),UDim2.new(0,0,0,35*P4Id.Value)) 
     P4Id.Value = P4Id.Value + 1
-    Label(ScrollPage4,"---Added Naoya SFX On Admin Page---",UDim2.new(1,0,0,35),UDim2.new(0,0,0,35*P4Id.Value)) 
+    Label(ScrollPage4,"---Added New animation 20 Dropkick---",UDim2.new(1,0,0,35),UDim2.new(0,0,0,35*P4Id.Value)) 
     P4Id.Value = P4Id.Value + 1
-    Label(ScrollPage4,"---Upcoming Don Lorenzo Animation---",UDim2.new(1,0,0,35),UDim2.new(0,0,0,35*P4Id.Value)) 
+    Label(ScrollPage4,"---Added Awakening Bar---",UDim2.new(1,0,0,35),UDim2.new(0,0,0,35*P4Id.Value)) 
     P4Id.Value = P4Id.Value + 1
     Label(ScrollPage4,"---???---",UDim2.new(1,0,0,35),UDim2.new(0,0,0,35*P4Id.Value)) 
     P4Id.Value = P4Id.Value + 1
