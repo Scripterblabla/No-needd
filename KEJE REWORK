@@ -1,0 +1,868 @@
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local Players = game:GetService("Players")
+local SoundService = game:GetService("SoundService")
+local ContentProvider = game:GetService("ContentProvider")
+local LocalPlayer = Players.LocalPlayer
+local CurrentCamera = workspace.CurrentCamera
+local Debris = game:GetService("Debris")
+
+local DROPKICK_CHAR_DELAY   = 0   
+local DROPKICK_CHAR_START   = 0   
+
+local DROPKICK_VICTIM_DELAY = 1.4   
+local DROPKICK_VICTIM_START = 0   
+
+local DROPKICK_CAM_DELAY    = 1.9   
+
+local EasingStyleMap = {
+	[Enum.PoseEasingStyle.Linear]   = Enum.EasingStyle.Linear,
+	[Enum.PoseEasingStyle.Bounce]   = Enum.EasingStyle.Bounce,
+	[Enum.PoseEasingStyle.Cubic]    = Enum.EasingStyle.Cubic,
+	[Enum.PoseEasingStyle.Elastic]  = Enum.EasingStyle.Elastic,
+	[Enum.PoseEasingStyle.Constant] = Enum.EasingStyle.Linear,
+}
+
+local EasingDirectionMap = {
+	[Enum.PoseEasingDirection.In]    = Enum.EasingDirection.In,
+	[Enum.PoseEasingDirection.Out]   = Enum.EasingDirection.Out,
+	[Enum.PoseEasingDirection.InOut] = Enum.EasingDirection.InOut,
+}
+
+local PriorityValue = {
+	[Enum.AnimationPriority.Core]      = 0,
+	[Enum.AnimationPriority.Idle]      = 1,
+	[Enum.AnimationPriority.Movement]  = 2,
+	[Enum.AnimationPriority.Action]    = 3,
+	[Enum.AnimationPriority.Action2]   = 4,
+	[Enum.AnimationPriority.Action3]   = 5,
+	[Enum.AnimationPriority.Action4]   = 6,
+}
+
+local RigControllers = {}
+local AnimationCache = {}
+
+local function DestroyExistingAnimator(model)
+	if not model then return end
+	local anim = model:FindFirstChildWhichIsA("Animator")
+	if anim then anim:Destroy() return end
+
+	local hum = model:FindFirstChildOfClass("Humanoid")
+	if hum then
+		anim = hum:FindFirstChildWhichIsA("Animator")
+		if anim then anim:Destroy() return end
+	end
+
+	for _, desc in ipairs(model:GetDescendants()) do
+		if desc:IsA("Animator") then
+			desc:Destroy()
+			return
+		end
+	end
+end
+
+local function GetOrCreateController(model)
+	if RigControllers[model] then return RigControllers[model] end
+
+	local controller = { Tracks = {} }
+
+	controller.Connection = RunService.Heartbeat:Connect(function()
+		if not model or not model.Parent then
+			if controller.Connection then controller.Connection:Disconnect() end
+			RigControllers[model] = nil
+			return
+		end
+
+		local now = os.clock()
+
+		for _, track in ipairs(controller.Tracks) do
+			if track.IsPlaying then
+				local spd = track.Speed or 1
+				local delta = (now - track._lastUpdateClock) * spd
+				track._timePosition = track._timePosition + delta
+				track._lastUpdateClock = now
+
+				if track.Looped then
+					if track.Length > 0 then
+						track._timePosition = track._timePosition % track.Length
+					end
+				else
+					if track._timePosition >= track.Length then
+						track._timePosition = track.Length
+						track.IsPlaying = false
+					end
+				end
+			end
+		end
+
+		local jointContributions = {}
+
+		for _, track in ipairs(controller.Tracks) do
+			if track.IsPlaying and (track.Weight or 1) > 0 and track._jointData then
+				local timePos = track._timePosition
+				local tWeight = track.Weight or 1
+				local tPrio = PriorityValue[track.Priority] or 3
+
+				for jointName, poses in pairs(track._jointData) do
+					if #poses == 0 then continue end
+
+					local lastPose = poses[1]
+					local nextPose = poses[1]
+					for i = 1, #poses - 1 do
+						if timePos >= poses[i].time and timePos < poses[i + 1].time then
+							lastPose = poses[i]
+							nextPose = poses[i + 1]
+							break
+						end
+					end
+					if timePos >= poses[#poses].time then
+						lastPose = poses[#poses]
+						nextPose = poses[#poses]
+					end
+
+					local alpha = 0
+					if nextPose.time > lastPose.time then
+						alpha = (timePos - lastPose.time) / (nextPose.time - lastPose.time)
+					end
+
+					local eased = TweenService:GetValue(alpha,
+						EasingStyleMap[nextPose.style] or Enum.EasingStyle.Linear,
+						EasingDirectionMap[nextPose.dir] or Enum.EasingDirection.InOut)
+
+					local finalCF = lastPose.cframe:Lerp(nextPose.cframe, eased)
+
+					if not jointContributions[jointName] then
+						jointContributions[jointName] = {}
+					end
+					table.insert(jointContributions[jointName], {
+						priority = tPrio, weight = tWeight, cframe = finalCF,
+						joint = lastPose.joint, jtype = lastPose.jtype
+					})
+				end
+			end
+		end
+
+		for jointName, contribs in pairs(jointContributions) do
+			if #contribs == 0 then continue end
+
+			local maxPrio = contribs[1].priority
+			for _, c in ipairs(contribs) do if c.priority > maxPrio then maxPrio = c.priority end end
+
+			local top = {}
+			for _, c in ipairs(contribs) do if c.priority == maxPrio then table.insert(top, c) end end
+
+			local finalCF
+			if #top == 1 then
+				finalCF = top[1].cframe
+			else
+				finalCF = top[1].cframe
+				local wsum = top[1].weight
+				for i = 2, #top do
+					local c = top[i]
+					local alpha = c.weight / (wsum + c.weight)
+					finalCF = finalCF:Lerp(c.cframe, alpha)
+					wsum = wsum + c.weight
+				end
+			end
+
+			local sample = top[1]
+			if sample.jtype == "Motor6D" or sample.jtype == "Bone" then
+				sample.joint.Transform = finalCF
+			end
+		end
+	end)
+
+	RigControllers[model] = controller
+	return controller
+end
+
+local function PlayKeyframeSequence(Model, KeyframeSequence, SpeedMult)
+	SpeedMult = SpeedMult or 1
+	if not Model or not KeyframeSequence then return nil end
+
+	DestroyExistingAnimator(Model)
+
+	local initialSpeed = SpeedMult
+	local cached = AnimationCache[KeyframeSequence.Name]
+	local keyframes, rawLength, jointData
+
+	if not cached then
+		keyframes = {}
+		for _, kf in ipairs(KeyframeSequence:GetKeyframes()) do
+			table.insert(keyframes, {Time = kf.Time, KF = kf})
+		end
+		table.sort(keyframes, function(a,b) return a.Time < b.Time end)
+		if #keyframes == 0 then return nil end
+		rawLength = keyframes[#keyframes].Time
+	else
+		rawLength = cached.Length
+	end
+
+	if cached then
+		local saved = cached.Data
+		jointData = {}
+		local motorMap = {}
+		local boneMap = {}
+
+		local function ResolveJoint(name)
+			if motorMap[name] then return motorMap[name], "Motor6D" end
+			if boneMap[name] then return boneMap[name], "Bone" end
+
+			for _, v in ipairs(Model:GetDescendants()) do
+				if v:IsA("Motor6D") and v.Part1 and v.Part1.Name == name then
+					motorMap[name] = v
+					return v, "Motor6D"
+				elseif v:IsA("Bone") and v.Name == name then
+					boneMap[name] = v
+					return v, "Bone"
+				end
+			end
+		end
+
+		for jointName, poses in pairs(saved) do
+			jointData[jointName] = {}
+			for _, pose in ipairs(poses) do
+				local joint, jtype = ResolveJoint(jointName)
+				if joint then
+					table.insert(jointData[jointName], {
+						time = pose.time, cframe = pose.cframe,
+						style = pose.style, dir = pose.dir,
+						joint = joint, jtype = jtype
+					})
+				end
+			end
+		end
+	else
+		jointData = {}
+		local motorMap = {}
+		local boneMap = {}
+
+		local function ResolveJoint(pose)
+			local name = pose.Name
+			if motorMap[name] then return motorMap[name], "Motor6D" end
+			if boneMap[name] then return boneMap[name], "Bone" end
+
+			for _, v in ipairs(Model:GetDescendants()) do
+				if v:IsA("Motor6D") and v.Part1 and v.Part1.Name == name then
+					motorMap[name] = v
+					return v, "Motor6D"
+				elseif v:IsA("Bone") and v.Name == name then
+					boneMap[name] = v
+					return v, "Bone"
+				end
+			end
+		end
+
+		for _, entry in ipairs(keyframes) do
+			for _, pose in ipairs(entry.KF:GetDescendants()) do
+				if pose:IsA("Pose") and pose.Weight > 0 then
+					local joint, jtype = ResolveJoint(pose)
+					if joint then
+						if not jointData[pose.Name] then jointData[pose.Name] = {} end
+						table.insert(jointData[pose.Name], {
+							time = entry.Time, cframe = pose.CFrame,
+							style = pose.EasingStyle, dir = pose.EasingDirection,
+							joint = joint, jtype = jtype
+						})
+					end
+				end
+			end
+		end
+
+		local save = {}
+		for jointName, poses in pairs(jointData) do
+			save[jointName] = {}
+			for _, pose in ipairs(poses) do
+				table.insert(save[jointName], {
+					time = pose.time, cframe = pose.cframe,
+					style = pose.style, dir = pose.dir
+				})
+			end
+		end
+
+		AnimationCache[KeyframeSequence.Name] = { Length = rawLength, Data = save }
+	end
+
+	local controller = GetOrCreateController(Model)
+	local track = {
+		Length = rawLength, Weight = 1, Priority = Enum.AnimationPriority.Action,
+		Looped = true, IsPlaying = false, Speed = initialSpeed, Model = Model,
+		_jointData = jointData, _timePosition = 0, _lastUpdateClock = os.clock(),
+
+		Play = function(self, speed)
+			if speed then self.Speed = speed end
+			if not self.IsPlaying then self.IsPlaying = true; self._lastUpdateClock = os.clock() end
+		end,
+		Stop = function(self) self.IsPlaying = false end,
+		AdjustSpeed = function(self, newSpeed) self.Speed = newSpeed or 1 end,
+		SetTimePosition = function(self, t) self._timePosition = math.clamp(t or 0, 0, self.Length) end,
+		GetTimePosition = function(self) return self._timePosition end,
+		RestoreAnimator = function(self)
+			local m = self.Model
+			if not m then return nil end
+			local existing = m:FindFirstChildWhichIsA("Animator")
+			if existing then return existing end
+			local hum = m:FindFirstChildOfClass("Humanoid")
+			if hum then
+				existing = hum:FindFirstChildWhichIsA("Animator")
+				if existing then return existing end
+			end
+			local animator = Instance.new("Animator")
+			animator.Parent = hum or m
+			return animator
+		end,
+	}
+
+	setmetatable(track, {
+		__index = function(self, k) if k == "TimePosition" then return self._timePosition end return rawget(self, k) end,
+		__newindex = function(self, k, v)
+			if k == "TimePosition" then self._timePosition = math.clamp(v or 0, 0, self.Length) else rawset(self, k, v) end
+		end,
+	})
+
+	table.insert(controller.Tracks, track)
+	track.IsPlaying = true
+	track._lastUpdateClock = os.clock()
+
+	return track
+end
+
+getgenv().PlayKeyframeSequence = PlayKeyframeSequence
+
+local GetAsset = getcustomasset or getsynasset
+local isfile = isfile or function(file) return false end
+local writefile = writefile or function(file, data) end
+
+local function LoadAssetFromURL(fileName, url)
+	if not isfile(fileName) then writefile(fileName, game:HttpGet(url)) end
+	local objects = game:GetObjects(GetAsset(fileName))
+	local kfSequence = nil
+	local loadedFolder = Instance.new("Folder")
+	loadedFolder.Name = "LoadedAssets_" .. fileName
+	loadedFolder.Parent = workspace
+	for _, obj in ipairs(objects) do
+		obj.Parent = loadedFolder
+		if obj:IsA("KeyframeSequence") then 
+			kfSequence = obj 
+		elseif obj:FindFirstChildWhichIsA("KeyframeSequence", true) then
+			kfSequence = obj:FindFirstChildWhichIsA("KeyframeSequence", true)
+		end
+	end
+	return kfSequence
+end
+
+local function LoadVFXFromURL(fileName, url)
+	if not isfile(fileName) then writefile(fileName, game:HttpGet(url)) end
+	local objects = game:GetObjects(GetAsset(fileName))
+	local loadedFolder = Instance.new("Folder")
+	loadedFolder.Name = "LoadedVFX_" .. fileName
+	loadedFolder.Parent = game:GetService("ReplicatedStorage")
+	for _, obj in ipairs(objects) do
+		obj.Parent = loadedFolder
+	end
+	return loadedFolder
+end
+
+local function LoadSoundFromURL(fileName, url)
+	if not isfile(fileName) then writefile(fileName, game:HttpGet(url)) end
+	return GetAsset(fileName)
+end
+
+local function LoadGuiFromURL(fileName, url)
+	if not isfile(fileName) then writefile(fileName, game:HttpGet(url)) end
+	local objects = game:GetObjects(GetAsset(fileName))
+	if objects and #objects > 0 then
+		return objects[1]
+	end
+	return nil
+end
+
+local isAnimating = false
+
+local RavageAnim = nil
+local RavageVFX = nil
+local RavageSFXId = nil
+
+local KJKickAnim = nil
+
+local Series20Anim = nil
+local Series20VFX = nil
+local Series20SFXId = nil
+
+local SeriesBarGuiAsset = nil
+
+local DropkickAnim = nil
+local DropkickSFXId = nil
+local DropkickVictimAnim = nil
+
+local savedBackpackTools = {}
+local activeDropkickTool = nil
+local currentAwakeningMainFrame = nil
+local currentAwakeningOriginalPos = nil
+
+task.spawn(function()
+	RavageAnim = LoadAssetFromURL("KJRavageAnim.rbxmx", "https://github.com/Scripterblabla/Made-By-Scripterblabla-/raw/refs/heads/main/KJ%20Ravage.Rbxmx")
+	RavageVFX = LoadVFXFromURL("KJRavageVFX.rbxmx", "https://github.com/Scripterblabla/Made-By-Scripterblabla-/raw/refs/heads/main/KJ%20Ravage%20VFX.Rbxmx")
+	RavageSFXId = LoadSoundFromURL("KJRavageSFX.mp3", "https://github.com/Scripterblabla/Made-By-Scripterblabla-/raw/refs/heads/main/KJ%20Ravage%20SFX.mp3")
+	
+	KJKickAnim = LoadAssetFromURL("KJKickAnim.rbxmx", "https://github.com/Scripterblabla/Made-By-Scripterblabla-/raw/refs/heads/main/KJ%20Kick.Rbxmx")
+	
+	Series20Anim = LoadAssetFromURL("KEJE20SeriesAnim.rbxmx", "https://github.com/Scripterblabla/Gix-Hub-Anti-Skid/raw/refs/heads/main/KEJE%20Ult%20Rework%20.Rbxmx")
+	Series20VFX = LoadVFXFromURL("KJ20SeriesVFX.rbxmx", "https://github.com/Scripterblabla/Made-By-Scripterblabla-/raw/refs/heads/main/20%20Series%20VFX.Rbxmx")
+	Series20SFXId = LoadSoundFromURL("KEJE20SeriesSFX.mp3", "https://github.com/Scripterblabla/Gix-Hub-Anti-Skid/raw/refs/heads/main/KEJE%20SFX.mp3")
+
+	SeriesBarGuiAsset = LoadGuiFromURL("SeriesBar.rbxmx", "https://github.com/Scripterblabla/Gix-Hub-Anti-Skid/raw/refs/heads/main/SERIES%20BAR.Rbxmx")
+	
+	DropkickAnim = LoadAssetFromURL("StyleDropkick.rbxmx", "https://github.com/Scripterblabla/Gix-Hub-Anti-Skid/raw/refs/heads/main/style%20Dropkick.Rbxmx")
+	DropkickSFXId = LoadSoundFromURL("StyleDropkickSFX.mp3", "https://github.com/Scripterblabla/Gix-Hub-Anti-Skid/raw/refs/heads/main/Style%20Dropkick%20SFX.mp3")
+	DropkickVictimAnim = LoadAssetFromURL("StyleDropkickVictim.rbxmx", "https://github.com/Scripterblabla/Gix-Hub-Anti-Skid/raw/refs/heads/main/Style%20Dropkick%20Victim.Rbxmx")
+end)
+
+local function getNearestR6Player(originPos, radius)
+	local nearestChar = nil
+	local shortestDist = radius
+
+	for _, p in pairs(Players:GetPlayers()) do
+		if p ~= LocalPlayer and p.Character then
+			local pHrp = p.Character:FindFirstChild("HumanoidRootPart")
+			local pHum = p.Character:FindFirstChildOfClass("Humanoid")
+			if pHrp and pHum and pHum.Health > 0 and pHum.RigType == Enum.HumanoidRigType.R6 then
+				local dist = (pHrp.Position - originPos).Magnitude
+				if dist <= shortestDist then
+					shortestDist = dist
+					nearestChar = p.Character
+				end
+			end
+		end
+	end
+	return nearestChar
+end
+
+local function createR6DummyClone(baseChar)
+	local oldArch = baseChar.Archivable
+	baseChar.Archivable = true
+	local dummy = baseChar:Clone()
+	baseChar.Archivable = oldArch
+
+	for _, v in pairs(dummy:GetDescendants()) do
+		if v:IsA("Script") or v:IsA("LocalScript") or v:IsA("Tool") or v:IsA("Sound") or v:IsA("Accessory") or v:IsA("Shirt") or v:IsA("Pants") or v:IsA("ShirtGraphic") or v:IsA("Decal") or v:IsA("CharacterMesh") or v:IsA("BodyColors") then
+			v:Destroy()
+		elseif v:IsA("BasePart") then
+			v.Color = Color3.fromRGB(163, 162, 165)
+			v.Material = Enum.Material.SmoothPlastic
+			v.Transparency = 0
+			if v.Name == "HumanoidRootPart" then v.Transparency = 1 end
+		end
+	end
+	dummy.Name = "DropkickVictimDummy"
+	return dummy
+end
+
+local function RestoreAwakeningBarAndTools()
+	if activeDropkickTool then
+		activeDropkickTool:Destroy()
+		activeDropkickTool = nil
+	end
+
+	local backpack = LocalPlayer:FindFirstChild("Backpack")
+	if backpack then
+		for _, tool in ipairs(savedBackpackTools) do
+			if tool and tool.Parent == nil then
+				tool.Parent = backpack
+			end
+		end
+	end
+	savedBackpackTools = {}
+
+	if currentAwakeningMainFrame and currentAwakeningOriginalPos then
+		TweenService:Create(currentAwakeningMainFrame, TweenInfo.new(0.8, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Position = currentAwakeningOriginalPos}):Play()
+	end
+end
+
+local function SetupTool1()
+	local Backpack = LocalPlayer:WaitForChild("Backpack")
+	if Backpack:FindFirstChild("Ravage") or (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Ravage")) then return end
+	
+	local Tool = Instance.new("Tool")
+	Tool.Name = "Ravage"
+	Tool.RequiresHandle = false
+	Tool.Parent = Backpack
+
+	Tool.Activated:Connect(function()
+		if isAnimating or not RavageAnim then return end
+		local myChar = LocalPlayer.Character
+		local myHRP = myChar and myChar:FindFirstChild("HumanoidRootPart")
+		if not myHRP then return end
+
+		isAnimating = true
+		myHRP.Anchored = true
+
+		task.spawn(function()
+			pcall(function()
+				loadstring(game:HttpGet("https://raw.githubusercontent.com/Scripterblabla/Made-By-Scripterblabla-/refs/heads/main/KJ%20Ravage%20Camera%20animation"))()
+			end)
+		end)
+
+		local track = PlayKeyframeSequence(myChar, RavageAnim, 1)
+		track.Priority = Enum.AnimationPriority.Action4
+		track.Looped = false 
+		
+		if RavageSFXId then
+			local ravageSound = Instance.new("Sound")
+			ravageSound.SoundId = RavageSFXId
+			ravageSound.Parent = myHRP
+			ravageSound.Volume = 1.5
+			ravageSound:Play()
+			Debris:AddItem(ravageSound, track.Length + 2)
+		end
+		
+		local vfxClone = nil
+		local vfxRenderConn = nil
+		
+		if RavageVFX then
+			vfxClone = RavageVFX:Clone()
+			vfxClone.Parent = workspace
+			
+			local punchesBase = vfxClone:FindFirstChild("RapidPunches", true)
+			if punchesBase and punchesBase:IsA("BasePart") then
+				
+				for _, emitter in ipairs(punchesBase:GetDescendants()) do
+					if emitter:IsA("ParticleEmitter") then
+						emitter.Enabled = false
+						emitter:Clear()
+					end
+				end
+				
+				vfxRenderConn = RunService.RenderStepped:Connect(function()
+					if myHRP and punchesBase.Parent then
+						punchesBase.CFrame = myHRP.CFrame * CFrame.new(0, 1, -3) * CFrame.Angles(0, math.rad(90), 0)
+					end
+				end)
+				
+				task.spawn(function()
+					task.wait(3.9) 
+					
+					for _, emitter in ipairs(punchesBase:GetDescendants()) do
+						if emitter:IsA("ParticleEmitter") then
+							emitter:Emit(20) 
+							emitter.Enabled = true
+						end
+					end
+					
+					task.wait(2.7) 
+					
+					for _, emitter in ipairs(punchesBase:GetDescendants()) do
+						if emitter:IsA("ParticleEmitter") then
+							emitter.Enabled = false
+						end
+					end
+				end)
+			end
+			Debris:AddItem(vfxClone, track.Length + 2)
+		end
+		
+		task.wait(track.Length)
+		
+		if vfxRenderConn then vfxRenderConn:Disconnect() end
+		track:Stop()
+		track:RestoreAnimator()
+		myHRP.Anchored = false
+		isAnimating = false
+	end)
+end
+
+local function SetupTool2()
+	local Backpack = LocalPlayer:WaitForChild("Backpack")
+	if Backpack:FindFirstChild("KJ Kick") or (LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("KJ Kick")) then return end
+	
+	local Tool = Instance.new("Tool")
+	Tool.Name = "KJ Kick"
+	Tool.RequiresHandle = false
+	Tool.Parent = Backpack
+
+	Tool.Activated:Connect(function()
+		if isAnimating or not KJKickAnim then return end
+		local myChar = LocalPlayer.Character
+		local myHRP = myChar and myChar:FindFirstChild("HumanoidRootPart")
+		if not myHRP then return end
+
+		isAnimating = true
+		myHRP.Anchored = true
+
+		local track = PlayKeyframeSequence(myChar, KJKickAnim, 1)
+		track.Priority = Enum.AnimationPriority.Action4
+		track.Looped = false 
+		
+		task.wait(track.Length)
+		
+		track:Stop()
+		track:RestoreAnimator()
+		myHRP.Anchored = false
+		isAnimating = false
+	end)
+end
+
+local function ExecuteDropkick()
+	if isAnimating or not DropkickAnim then return end
+	local myChar = LocalPlayer.Character
+	local myHRP = myChar and myChar:FindFirstChild("HumanoidRootPart")
+	if not myHRP then return end
+
+	isAnimating = true
+	myHRP.Anchored = true
+
+	local victimChar = getNearestR6Player(myHRP.Position, 2000)
+	local isDummyCreated = false
+
+	if not victimChar then
+		isDummyCreated = true
+		victimChar = createR6DummyClone(myChar)
+		victimChar.Parent = workspace
+	end
+
+	local victimHRP = victimChar:FindFirstChild("HumanoidRootPart")
+	local victimOldAnchored = false
+
+	if victimHRP then
+		victimOldAnchored = victimHRP.Anchored
+		victimHRP.AssemblyLinearVelocity = Vector3.zero
+		victimHRP.AssemblyAngularVelocity = Vector3.zero
+		victimHRP.Anchored = true
+		victimHRP.CFrame = myHRP.CFrame * CFrame.new(0, 0, -3.5) * CFrame.Angles(0, math.pi, 0)
+	end
+
+	local dropkickSound = nil
+	if DropkickSFXId then
+		dropkickSound = Instance.new("Sound")
+		dropkickSound.Name = "StyleDropkickSFX"
+		dropkickSound.SoundId = DropkickSFXId
+		dropkickSound.Volume = 2.5
+		dropkickSound.RollOffMaxDistance = 999999
+		dropkickSound.Parent = SoundService
+		dropkickSound:Play()
+	end
+
+	task.spawn(function()
+		if DROPKICK_CAM_DELAY > 0 then task.wait(DROPKICK_CAM_DELAY) end
+		pcall(function()
+			loadstring(game:HttpGet("https://raw.githubusercontent.com/Scripterblabla/Gix-Hub-Anti-Skid/refs/heads/main/Dropkickittttt%20Camera%20animation"))()
+		end)
+	end)
+
+	local charTrack = nil
+	task.spawn(function()
+		if DROPKICK_CHAR_DELAY > 0 then task.wait(DROPKICK_CHAR_DELAY) end
+		if myChar and DropkickAnim then
+			charTrack = PlayKeyframeSequence(myChar, DropkickAnim, 1)
+			charTrack.Priority = Enum.AnimationPriority.Action4
+			charTrack.Looped = false
+			if DROPKICK_CHAR_START > 0 then
+				pcall(function() charTrack.TimePosition = DROPKICK_CHAR_START end)
+			end
+		end
+	end)
+
+	local victimTrack = nil
+	task.spawn(function()
+		if DROPKICK_VICTIM_DELAY > 0 then task.wait(DROPKICK_VICTIM_DELAY) end
+		if victimChar and DropkickVictimAnim then
+			victimTrack = PlayKeyframeSequence(victimChar, DropkickVictimAnim, 1)
+			victimTrack.Priority = Enum.AnimationPriority.Action4
+			victimTrack.Looped = false
+			if DROPKICK_VICTIM_START > 0 then
+				pcall(function() victimTrack.TimePosition = DROPKICK_VICTIM_START end)
+			end
+		end
+	end)
+
+	task.wait(27)
+
+	if charTrack then
+		pcall(function() charTrack:Stop(); charTrack:RestoreAnimator() end)
+	end
+	if victimTrack then
+		pcall(function() victimTrack:Stop(); victimTrack:RestoreAnimator() end)
+	end
+
+	if dropkickSound then
+		dropkickSound:Stop()
+		dropkickSound:Destroy()
+	end
+
+	if isDummyCreated then
+		if victimChar then victimChar:Destroy() end
+	else
+		if victimHRP then
+			victimHRP.Anchored = victimOldAnchored
+		end
+	end
+
+	myHRP.Anchored = false
+	isAnimating = false
+
+	RestoreAwakeningBarAndTools()
+end
+
+local function GiveDropkickTool()
+	local backpack = LocalPlayer:WaitForChild("Backpack")
+	local tool = Instance.new("Tool")
+	tool.Name = "20 Dropkick"
+	tool.RequiresHandle = false
+	tool.Parent = backpack
+	activeDropkickTool = tool
+
+	tool.Activated:Connect(function()
+		ExecuteDropkick()
+	end)
+end
+
+local function Execute20SeriesAwakening(mainFrame, barGui)
+	if isAnimating or not Series20Anim then return end
+	local myChar = LocalPlayer.Character
+	local myHRP = myChar and myChar:FindFirstChild("HumanoidRootPart")
+	if not myHRP then return end
+
+	isAnimating = true
+	myHRP.Anchored = true
+
+	local track = PlayKeyframeSequence(myChar, Series20Anim, 1)
+	track.Priority = Enum.AnimationPriority.Action4
+	track.Looped = false 
+
+	if Series20SFXId then
+		local series20Sound = Instance.new("Sound")
+		series20Sound.SoundId = Series20SFXId
+		series20Sound.Parent = myHRP
+		series20Sound.Volume = 2.5
+		series20Sound:Play()
+		Debris:AddItem(series20Sound, track.Length + 2)
+	end
+
+	local vfxClone = nil
+	local vfxRenderConn = nil
+	local auraBase = nil
+
+	if Series20VFX then
+		vfxClone = Series20VFX:Clone()
+		vfxClone.Parent = workspace
+		
+		auraBase = vfxClone:FindFirstChild("Aura", true)
+		if auraBase and auraBase:IsA("BasePart") then
+			vfxRenderConn = RunService.RenderStepped:Connect(function()
+				if myHRP and auraBase.Parent then
+					auraBase.CFrame = myHRP.CFrame * CFrame.new(0, -2.8, 0)
+				end
+			end)
+			for _, descendant in ipairs(auraBase:GetDescendants()) do
+				if descendant:IsA("ParticleEmitter") then
+					descendant.Enabled = true
+				end
+			end
+		end
+	end
+
+	task.wait(track.Length)
+
+	if auraBase then
+		for _, descendant in ipairs(auraBase:GetDescendants()) do
+			if descendant:IsA("ParticleEmitter") then
+				descendant.Enabled = false
+			end
+		end
+	end
+
+	if vfxRenderConn then vfxRenderConn:Disconnect() end
+	if vfxClone then Debris:AddItem(vfxClone, 2) end
+
+	track:Stop()
+	track:RestoreAnimator()
+	myHRP.Anchored = false
+	isAnimating = false
+
+	currentAwakeningMainFrame = mainFrame
+	if not currentAwakeningOriginalPos then
+		currentAwakeningOriginalPos = mainFrame.Position
+	end
+
+	local hiddenPosition = currentAwakeningOriginalPos + UDim2.new(0, 0, 1.2, 0)
+
+	TweenService:Create(mainFrame, TweenInfo.new(0.8, Enum.EasingStyle.Quart, Enum.EasingDirection.In), {Position = hiddenPosition}):Play()
+
+	savedBackpackTools = {}
+	local backpack = LocalPlayer:WaitForChild("Backpack")
+	for _, item in ipairs(backpack:GetChildren()) do
+		if item:IsA("Tool") then
+			table.insert(savedBackpackTools, item)
+			item.Parent = nil
+		end
+	end
+	if myChar then
+		for _, item in ipairs(myChar:GetChildren()) do
+			if item:IsA("Tool") then
+				table.insert(savedBackpackTools, item)
+				item.Parent = nil
+			end
+		end
+	end
+
+	GiveDropkickTool()
+end
+
+local function SetupAwakeningBar()
+	if not SeriesBarGuiAsset then return end
+
+	local playerGui = LocalPlayer:WaitForChild("PlayerGui")
+	if playerGui:FindFirstChild("SeriesBarGui") then
+		playerGui.SeriesBarGui:Destroy()
+	end
+
+	local barGui = SeriesBarGuiAsset:Clone()
+	barGui.Name = "SeriesBarGui"
+	barGui.Parent = playerGui
+
+	local mainContainer = barGui:FindFirstChildOfClass("Frame") or barGui:FindFirstChildOfClass("ImageLabel") or barGui
+	currentAwakeningMainFrame = mainContainer
+	currentAwakeningOriginalPos = mainContainer.Position
+
+	local pressTarget = nil
+	for _, descendant in ipairs(barGui:GetDescendants()) do
+		if descendant:IsA("TextButton") or descendant:IsA("ImageButton") then
+			pressTarget = descendant
+			break
+		elseif descendant:IsA("TextLabel") and (string.find(string.upper(descendant.Text), "PRESS") or string.find(string.upper(descendant.Text), "SERIES")) then
+			pressTarget = descendant
+		end
+	end
+
+	if pressTarget then
+		if pressTarget:IsA("TextButton") or pressTarget:IsA("ImageButton") then
+			pressTarget.MouseButton1Click:Connect(function()
+				Execute20SeriesAwakening(mainContainer, barGui)
+			end)
+		else
+			local btn = Instance.new("TextButton")
+			btn.Size = UDim2.new(1, 0, 1, 0)
+			btn.BackgroundTransparency = 1
+			btn.Text = ""
+			btn.Parent = pressTarget
+			btn.MouseButton1Click:Connect(function()
+				Execute20SeriesAwakening(mainContainer, barGui)
+			end)
+		end
+	end
+end
+
+SetupTool1()
+SetupTool2()
+
+task.spawn(function()
+	task.wait(1.5)
+	SetupAwakeningBar()
+end)
+
+LocalPlayer.CharacterAdded:Connect(function()
+	task.wait(1)
+	SetupTool1()
+	SetupTool2()
+	SetupAwakeningBar()
+end)
