@@ -4,6 +4,7 @@ local CollectionService = game:GetService("CollectionService")
 local RunService = game:GetService("RunService")
 local Lighting = game:GetService("Lighting")
 local SoundService = game:GetService("SoundService")
+local Debris = game:GetService("Debris")
 
 local player = Players.LocalPlayer
 local camera = workspace.CurrentCamera
@@ -20,6 +21,7 @@ local STOP_NAOYA_EARLY = 0
 local GENOS_CHAR_DELAY = 0        
 local SKIP_GENOS_START = 0        
 local STOP_GENOS_EARLY = 0        
+local GENOS_VICTIM_DISTANCE = 13.5
 
 local SANDE_CHAR_DELAY = 0
 local SKIP_SANDE_START = 0
@@ -39,6 +41,14 @@ end
 
 if not isfile("Genos.rbxmx") then
 	writefile("Genos.rbxmx", game:HttpGet("https://github.com/Scripterblabla/No-needd/raw/refs/heads/main/Genos.Rbxmx"))
+end
+
+if not isfile("GenosVictim.rbxmx") then
+	writefile("GenosVictim.rbxmx", game:HttpGet("https://github.com/Scripterblabla/No-needd/raw/refs/heads/main/Genos%20Victim.Rbxmx"))
+end
+
+if not isfile("GenosSFX.mp3") then
+	writefile("GenosSFX.mp3", game:HttpGet("https://github.com/Scripterblabla/No-needd/raw/refs/heads/main/Genos.mp3"))
 end
 
 if not isfile("JudasMusic.mp3") then
@@ -65,6 +75,10 @@ if not isfile("SandevistanVictim.rbxmx") then
 	writefile("SandevistanVictim.rbxmx", game:HttpGet("https://github.com/Scripterblabla/Gix-Hub-By-Scripterblabla/raw/refs/heads/main/Sandevistan%20Victim.Rbxmx"))
 end
 
+if not isfile("GenosVFX2.rbxmx") then
+	writefile("GenosVFX2.rbxmx", game:HttpGet("https://github.com/Scripterblabla/No-needd/raw/refs/heads/main/Genos%20VFX.Rbxmx"))
+end
+
 local EngineCall = loadstring(game:HttpGet("https://raw.githubusercontent.com/ian49972/Animator/refs/heads/main/RobAnimator"))()
 local PlayKeyframeSequence = type(EngineCall) == "function" and EngineCall or getgenv().PlayKeyframeSequence
 
@@ -76,9 +90,11 @@ local suiryuAnimAsset = game:GetObjects(getcustomasset("Suiryu.rbxmx"))[1]
 local naoyaAnimAsset = game:GetObjects(getcustomasset("HeiOfNaoya.rbxmx"))[1]
 local judasAnimAsset = game:GetObjects(getcustomasset("Judas.rbxm"))[1]
 local genosAnimAsset = game:GetObjects(getcustomasset("Genos.rbxmx"))[1]
+local genosVictimAsset = game:GetObjects(getcustomasset("GenosVictim.rbxmx"))[1]
 local sandeAnimAsset = game:GetObjects(getcustomasset("SandevistanAnim.rbxmx"))[1]
 local sandeFramesAsset = game:GetObjects(getcustomasset("SandevistanFrames.rbxmx"))[1]
 local sandeVictimAsset = game:GetObjects(getcustomasset("SandevistanVictim.rbxmx"))[1]
+local genosBoomAsset = game:GetObjects(getcustomasset("GenosVFX2.rbxmx"))[1]
 
 local judasSound = Instance.new("Sound")
 judasSound.Name = "JudasTheme"
@@ -93,6 +109,13 @@ naoyaSound.SoundId = getcustomasset("HeiOfSFX.mp3")
 naoyaSound.Looped = false
 naoyaSound.Volume = 2.5 
 naoyaSound.Parent = SoundService
+
+local genosSound = Instance.new("Sound")
+genosSound.Name = "GenosSFX"
+genosSound.SoundId = getcustomasset("GenosSFX.mp3")
+genosSound.Looped = false
+genosSound.Volume = 3.0
+genosSound.Parent = SoundService
 
 local sandeSound = Instance.new("Sound")
 sandeSound.Name = "SandeSFX"
@@ -111,6 +134,7 @@ local suiryuAnimSeq = getKeyframeSequence(suiryuAnimAsset)
 local naoyaAnimSeq = getKeyframeSequence(naoyaAnimAsset)
 local judasAnimSeq = getKeyframeSequence(judasAnimAsset)
 local genosAnimSeq = getKeyframeSequence(genosAnimAsset)
+local genosVictimAnimSeq = getKeyframeSequence(genosVictimAsset)
 local sandeAnimSeq = getKeyframeSequence(sandeAnimAsset)
 local sandeVictimAnimSeq = getKeyframeSequence(sandeVictimAsset)
 
@@ -175,8 +199,217 @@ local function createR6DummyClone(baseChar)
 			if v.Name == "HumanoidRootPart" then v.Transparency = 1 end
 		end
 	end
-	dummy.Name = "SandevistanVictimDummy"
+	dummy.Name = "VictimDummy"
 	return dummy
+end
+
+local function attachGenosArmAccessory(char, assetId, bodyPartName)
+	local part = char:FindFirstChild(bodyPartName)
+	if not part then return nil end
+	
+	local success, result = pcall(function()
+		return game:GetObjects("rbxassetid://" .. tostring(assetId))[1]
+	end)
+	
+	if success and result then
+		result.Parent = char
+		if result:IsA("Accessory") or result:IsA("Accoutrement") then
+			local handle = result:FindFirstChild("Handle")
+			if handle then
+				handle.CFrame = part.CFrame
+				local weld = Instance.new("WeldConstraint")
+				weld.Part0 = part
+				weld.Part1 = handle
+				weld.Parent = handle
+			end
+		elseif result:IsA("BasePart") or result:IsA("Model") then
+			local primary = result:IsA("Model") and (result.PrimaryPart or result:FindFirstChildOfClass("BasePart")) or result
+			if primary then
+				if result:IsA("Model") then
+					result:SetPrimaryPartCFrame(part.CFrame)
+					for _, p in pairs(result:GetDescendants()) do
+						if p:IsA("BasePart") and p ~= primary then
+							local w = Instance.new("WeldConstraint")
+							w.Part0 = primary
+							w.Part1 = p
+							w.Parent = p
+						end
+					end
+				end
+				local weld = Instance.new("WeldConstraint")
+				weld.Part0 = part
+				weld.Part1 = primary
+				weld.Parent = primary
+			end
+		end
+		return result
+	end
+	return nil
+end
+
+local function createGenosAccessoryFireVFX(accessory)
+	if not accessory then return nil end
+	
+	local handle = accessory:FindFirstChild("Handle") 
+		or accessory:FindFirstChildWhichIsA("BasePart", true)
+	if not handle then return nil end
+
+	local folder = Instance.new("Folder")
+	folder.Name = "GenosAccessoryFireVFX"
+	folder.Parent = handle
+
+	local animConns = {}
+
+	local muzzleAtt = Instance.new("Attachment")
+	muzzleAtt.Name = "GenosMuzzle"
+	muzzleAtt.Position = Vector3.new(0, -0.8, 0)
+	muzzleAtt.Parent = handle
+
+	local backAtt = Instance.new("Attachment")
+	backAtt.Name = "GenosBackExhaust"
+	backAtt.Position = Vector3.new(0, 0.8, 0)
+	backAtt.Parent = handle
+
+	local coreFlame = Instance.new("ParticleEmitter")
+	coreFlame.Name = "GenosCoreFlame"
+	coreFlame.Texture = "rbxassetid://243098098"
+	coreFlame.Color = ColorSequence.new({
+		ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 255)),
+		ColorSequenceKeypoint.new(0.3, Color3.fromRGB(255, 240, 180)),
+		ColorSequenceKeypoint.new(0.7, Color3.fromRGB(255, 180, 60)),
+		ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 80, 0))
+	})
+	coreFlame.Size = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 0.5),
+		NumberSequenceKeypoint.new(0.5, 1.8),
+		NumberSequenceKeypoint.new(1, 0)
+	})
+	coreFlame.Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 0.1),
+		NumberSequenceKeypoint.new(0.6, 0.3),
+		NumberSequenceKeypoint.new(1, 1)
+	})
+	coreFlame.Lifetime = NumberRange.new(0.25, 0.6)
+	coreFlame.Rate = 180
+	coreFlame.Speed = NumberRange.new(10, 22)
+	coreFlame.VelocitySpread = 30
+	coreFlame.LightEmission = 1
+	coreFlame.LightInfluence = 0
+	coreFlame.ZOffset = 1.6
+	coreFlame.Enabled = true
+	coreFlame.Parent = muzzleAtt
+
+	local embers = Instance.new("ParticleEmitter")
+	embers.Name = "GenosEmbers"
+	embers.Texture = "rbxassetid://258122325"
+	embers.Color = ColorSequence.new({
+		ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 200)),
+		ColorSequenceKeypoint.new(0.4, Color3.fromRGB(255, 180, 40)),
+		ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 50, 0))
+	})
+	embers.Size = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 0.35),
+		NumberSequenceKeypoint.new(0.6, 0.22),
+		NumberSequenceKeypoint.new(1, 0)
+	})
+	embers.Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 0),
+		NumberSequenceKeypoint.new(1, 0.4)
+	})
+	embers.Lifetime = NumberRange.new(0.5, 1.2)
+	embers.Rate = 110
+	embers.Speed = NumberRange.new(12, 28)
+	embers.VelocitySpread = 180
+	embers.Acceleration = Vector3.new(0, -45, 0)
+	embers.Drag = 2
+	embers.LightEmission = 1
+	embers.ZOffset = 2
+	embers.Enabled = true
+	embers.Parent = muzzleAtt
+
+	local smoke = Instance.new("ParticleEmitter")
+	smoke.Name = "GenosExhaustSmoke"
+	smoke.Texture = "rbxassetid://241722241"
+	smoke.Color = ColorSequence.new({
+		ColorSequenceKeypoint.new(0, Color3.fromRGB(65, 65, 65)),
+		ColorSequenceKeypoint.new(0.5, Color3.fromRGB(30, 30, 30)),
+		ColorSequenceKeypoint.new(1, Color3.fromRGB(8, 8, 8))
+	})
+	smoke.Size = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 0.8),
+		NumberSequenceKeypoint.new(0.5, 2.5),
+		NumberSequenceKeypoint.new(1, 4.5)
+	})
+	smoke.Transparency = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 0.4),
+		NumberSequenceKeypoint.new(0.6, 0.7),
+		NumberSequenceKeypoint.new(1, 1)
+	})
+	smoke.Lifetime = NumberRange.new(0.8, 1.6)
+	smoke.Rate = 50
+	smoke.Speed = NumberRange.new(4, 10)
+	smoke.Rotation = NumberRange.new(-180, 180)
+	smoke.RotSpeed = NumberRange.new(-45, 45)
+	smoke.VelocitySpread = 60
+	smoke.LightEmission = 0
+	smoke.ZOffset = 1
+	smoke.Enabled = true
+	smoke.Parent = backAtt
+
+	local sparks = Instance.new("ParticleEmitter")
+	sparks.Name = "GenosMetalSparks"
+	sparks.Texture = "rbxassetid://258122325"
+	sparks.Color = ColorSequence.new({
+		ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 255, 220)),
+		ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 200, 80)),
+		ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 120, 20))
+	})
+	sparks.Size = NumberSequence.new({
+		NumberSequenceKeypoint.new(0, 0.28),
+		NumberSequenceKeypoint.new(1, 0)
+	})
+	sparks.Lifetime = NumberRange.new(0.3, 0.7)
+	sparks.Rate = 70
+	sparks.Speed = NumberRange.new(15, 32)
+	sparks.VelocitySpread = 360
+	sparks.Acceleration = Vector3.new(0, -50, 0)
+	sparks.Drag = 1.5
+	sparks.LightEmission = 1
+	sparks.ZOffset = 2
+	sparks.Enabled = true
+	sparks.Parent = muzzleAtt
+
+	local light = Instance.new("PointLight")
+	light.Name = "GenosOverheatLight"
+	light.Color = Color3.fromRGB(255, 120, 20)
+	light.Brightness = 5
+	light.Range = 16
+	light.Shadows = false
+	light.Parent = handle
+
+	task.spawn(function()
+		local t = 0
+		local conn = RunService.Heartbeat:Connect(function(dt)
+			if not light or not light.Parent then return end
+			t = t + dt * 7
+			light.Brightness = 4 + math.sin(t) * 1.8
+			light.Range = 15 + math.sin(t * 0.8) * 3
+			if coreFlame and coreFlame.Parent then
+				local factor = 1 + math.sin(t * 1.3) * 0.22
+				coreFlame.Rate = 180 * factor
+				sparks.Rate = 70 * (2 - factor)
+			end
+		end)
+		table.insert(animConns, conn)
+	end)
+
+	folder.Destroying:Connect(function()
+		for _, conn in ipairs(animConns) do
+			if conn then pcall(function() conn:Disconnect() end) end
+		end
+	end)
+
+	return folder
 end
 
 local toolSuiryu = Instance.new("Tool")
@@ -312,6 +545,7 @@ toolGenos.Parent = player:WaitForChild("Backpack")
 
 local debounceGenos = false
 local activeGenosAnim = nil
+local activeGenosVictimAnim = nil
 
 toolGenos.Activated:Connect(function()
 	if debounceGenos or not PlayKeyframeSequence then return end
@@ -321,8 +555,11 @@ toolGenos.Activated:Connect(function()
 	local humanoid = character:FindFirstChildOfClass("Humanoid")
 	local hrp = character:FindFirstChild("HumanoidRootPart")
 	local head = character:FindFirstChild("Head")
+	local lArm = character:FindFirstChild("Left Arm") or character:FindFirstChild("LeftUpperArm") or character:FindFirstChild("Left Upper Arm")
+	local rArm = character:FindFirstChild("Right Arm") or character:FindFirstChild("RightUpperArm") or character:FindFirstChild("Right Upper Arm")
 	if not humanoid or not hrp or not head then debounceGenos = false return end
 	if activeGenosAnim then pcall(function() activeGenosAnim:Stop(); activeGenosAnim:RestoreAnimator() end) activeGenosAnim = nil end
+	if activeGenosVictimAnim then pcall(function() activeGenosVictimAnim:Stop(); activeGenosVictimAnim:RestoreAnimator() end) activeGenosVictimAnim = nil end
 
 	Controls:Disable()
 	local oldSpeed = humanoid.WalkSpeed
@@ -339,11 +576,72 @@ toolGenos.Activated:Connect(function()
 	local originalCamSubject = camera.CameraSubject
 	camera.CameraSubject = head
 
+	local victimChar = getNearestPlayer(hrp.Position, 2000)
+	local isDummyCreated = false
+
+	if not victimChar then
+		isDummyCreated = true
+		victimChar = createR6DummyClone(character)
+		victimChar.Name = "GenosVictimDummy"
+		victimChar.Parent = workspace
+	end
+
+	local victimHrp = victimChar:FindFirstChild("HumanoidRootPart")
+	local victimOldAnchored = false
+
+	if victimHrp then
+		victimOldAnchored = victimHrp.Anchored
+		victimHrp.AssemblyLinearVelocity = Vector3.zero
+		victimHrp.AssemblyAngularVelocity = Vector3.zero
+		victimHrp.Anchored = true
+
+		victimHrp.CFrame = hrp.CFrame * CFrame.new(0, 0, -GENOS_VICTIM_DISTANCE) * CFrame.Angles(0, math.pi, 0)
+	end
+
+	genosSound:Play()
+
+	local accLArm = attachGenosArmAccessory(character, "86960438665108", "Left Arm")
+	local accRArm = attachGenosArmAccessory(character, "135444140745806", "Right Arm")
+
+	local fireAccL = accLArm and createGenosAccessoryFireVFX(accLArm)
+	local fireAccR = accRArm and createGenosAccessoryFireVFX(accRArm)
+
+	task.spawn(function()
+		task.wait(8.0)
+		if character and hrp and genosBoomAsset then
+			local boom = genosBoomAsset:Clone()
+			boom.Name = "Boom"
+			
+			if boom:IsA("Model") then
+				if not boom.PrimaryPart then
+					boom.PrimaryPart = boom:FindFirstChildWhichIsA("BasePart", true)
+				end
+				if boom.PrimaryPart then
+					boom:SetPrimaryPartCFrame(hrp.CFrame * CFrame.new(0, -3, -10))
+				end
+			elseif boom:IsA("BasePart") then
+				boom.CFrame = hrp.CFrame * CFrame.new(0, 3, 0)
+			else
+				local part = boom:FindFirstChildWhichIsA("BasePart", true)
+				if part then
+					part.CFrame = hrp.CFrame * CFrame.new(0, 3, 0)
+				end
+			end
+			
+			boom.Parent = workspace
+			Debris:AddItem(boom, 1.8)
+		end
+	end)
+
 	task.spawn(function()
 		if GENOS_CHAR_DELAY > 0 then task.wait(GENOS_CHAR_DELAY) end
 		if genosAnimSeq and character then
 			activeGenosAnim = PlayKeyframeSequence(character, genosAnimSeq, 1)
 			if SKIP_GENOS_START > 0 then pcall(function() activeGenosAnim.TimePosition = SKIP_GENOS_START end) end
+		end
+		if genosVictimAnimSeq and victimChar then
+			activeGenosVictimAnim = PlayKeyframeSequence(victimChar, genosVictimAnimSeq, 1)
+			if SKIP_GENOS_START > 0 then pcall(function() activeGenosVictimAnim.TimePosition = SKIP_GENOS_START end) end
 		end
 	end)
 
@@ -352,6 +650,25 @@ toolGenos.Activated:Connect(function()
 	task.wait(totalWaitTime)
 
 	if activeGenosAnim then pcall(function() activeGenosAnim:Stop(); activeGenosAnim:RestoreAnimator() end) activeGenosAnim = nil end
+	if activeGenosVictimAnim then pcall(function() activeGenosVictimAnim:Stop(); activeGenosVictimAnim:RestoreAnimator() end) activeGenosVictimAnim = nil end
+
+	if fireAccL then fireAccL:Destroy() end
+	if fireAccR then fireAccR:Destroy() end
+	if accLArm then accLArm:Destroy() end
+	if accRArm then accRArm:Destroy() end
+
+	genosSound:Stop()
+
+	if isDummyCreated then
+		if victimChar then victimChar:Destroy() end
+	else
+		if victimHrp then
+			victimHrp.AssemblyLinearVelocity = Vector3.zero
+			victimHrp.AssemblyAngularVelocity = Vector3.zero
+			victimHrp.Anchored = victimOldAnchored
+		end
+	end
+
 	if originalCamSubject then camera.CameraSubject = originalCamSubject end
 
 	hrp.AssemblyLinearVelocity = Vector3.zero
@@ -491,10 +808,10 @@ local function spawnAfterimage(char)
 		if v:IsA("BasePart") then
 			v.Anchored = true
 			v.CanCollide = false
-			v.CanQuery = false      
-			v.CanTouch = false      
-			v.Massless = true       
-			v.CastShadow = false    
+			v.CanQuery = false
+			v.CanTouch = false
+			v.Massless = true
+			v.CastShadow = false
 			
 			v.Material = Enum.Material.ForceField 
 			v.Color = randomColor 
